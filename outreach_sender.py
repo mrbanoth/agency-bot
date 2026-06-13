@@ -145,23 +145,28 @@ def run_outreach(leads: list):
 
     print(f"  [Sender] {len(queue)} queued | {sent_today}/{DAILY_LIMIT} sent today")
 
+    sent_count = 0
     for lead in queue:
         if _count_today() >= DAILY_LIMIT:
-            print("  [Sender] Daily limit hit — done for today")
+            print(f"  [Sender] Daily limit ({DAILY_LIMIT}) hit — done for today ✓")
             break
 
         email = lead["email"]
         subject, body = _build_email(lead)
-        print(f"  → {lead.get('name')} <{email}>")
+        print(f"\n  📧 Sending to: {lead.get('name')} <{email}>")
+        print(f"     Subject: {subject}")
 
         if _send_gmail(email, subject, body):
             _log_sent(lead, email)
-            print("    ✓ Sent")
+            sent_count += 1
+            print(f"     ✅ SENT ({_count_today()}/{DAILY_LIMIT} today)")
         else:
-            print("    ✗ Failed")
+            print(f"     ❌ Failed — check GMAIL_APP_PASSWORD secret")
 
-        # Random 3–6 min gap between sends — looks human to Gmail
+        # Random 2–4 min gap between sends — looks human to Gmail
         if lead != queue[-1]:
-            wait = random.randint(180, 360)
-            print(f"    Waiting {wait//60}m ...")
+            wait = random.randint(120, 240)
+            print(f"     ⏱  Waiting {wait//60}m {wait%60}s before next send ...")
             time.sleep(wait)
+
+    print(f"\n  [Sender] Run complete — {sent_count} emails sent this run")

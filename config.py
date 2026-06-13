@@ -31,19 +31,19 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GROQ_MODEL   = "llama-3.3-70b-versatile"
 
 # ─── SCRAPER SETTINGS ─────────────────────────────────────────
-# Add or remove cities freely. Bot rotates through all of them.
+# Bot rotates through all cities — 1 city per day automatically.
+# Day 1 = Hyderabad, Day 2 = Bangalore, etc. Cycles forever.
 CITIES = [
-    # Tier 1 — Start here
+    # Tier 1 — highest competition but most leads
     "Hyderabad", "Bangalore", "Mumbai", "Chennai", "Delhi",
-    # Tier 2 — Expand after first week
+    # Tier 2 — good volume
     "Pune", "Kolkata", "Ahmedabad", "Jaipur", "Surat",
     "Lucknow", "Kanpur", "Nagpur", "Visakhapatnam", "Bhopal",
-    # Tier 3 — Smaller cities (less competition, easier to close)
+    # Tier 3 — smaller cities, less competition, easier to close
     "Coimbatore", "Kochi", "Indore", "Vadodara", "Patna",
 ]
-# To run only one city: CITIES = ["Hyderabad"]
 
-BUSINESS_TYPES  = [
+BUSINESS_TYPES = [
     "restaurant",
     "dental clinic",
     "boutique",
@@ -60,13 +60,43 @@ BUSINESS_TYPES  = [
     "event management",
     "bakery",
 ]
-MAX_LEADS_PER_RUN = 50   # per city per run
-OUTPUT_CSV        = "leads.csv"
-LOG_FILE          = "agency_log.txt"
+
+LEADS_PER_CATEGORY = 3    # 3 leads × 15 types = ~45 per city per run
+OUTPUT_CSV         = "leads.csv"
+LOG_FILE           = "agency_log.txt"
+
+# ─── BRAND BLOCKLIST ──────────────────────────────────────────
+# Skip huge national brands — they already have world-class sites.
+# Bot focuses on small/medium local businesses that NEED your help.
+BRAND_BLOCKLIST = [
+    # Hospitals / pharma
+    "apollo","yashoda","aster","care hospital","fortis","manipal","narayana",
+    "rainbow children","kims","maxcure",
+    # Hotels / hospitality
+    "marriott","itc hotel","taj hotel","hyatt","hilton","radisson","oberoi",
+    "lemon tree","the park hotel",
+    # Food chains / QSR
+    "mcdonald","kfc","pizza hut","subway","domino","burger king","starbucks",
+    "cafe coffee day","barbeque nation",
+    # Gym platforms
+    "cult.fit","anytime fitness","gold's gym",
+    # Travel platforms
+    "makemytrip","cleartrip","yatra","goibibo","booking.com","airbnb","thomas cook",
+    # Ed-tech
+    "byju","unacademy","vedantu","toppr",
+    # Banks
+    "hdfc","icici","sbi","axis bank","kotak",
+    # Retail chains
+    "reliance","big bazaar","dmart","lifestyle","shoppers stop",
+    # Big websites / aggregators (they have dedicated dev teams)
+    "instagram.com","facebook.com","justdial","sulekha","indiamart",
+    "zomato","swiggy","amazon","flipkart","myntra","naukri","linkedin",
+    "practo","lybrate","1mg","netmeds","dezy.com","riya.travel",
+]
 
 # ─── QUALITY THRESHOLDS ───────────────────────────────────────
-HIGH_PRIORITY_SCORE   = 40
-MEDIUM_PRIORITY_SCORE = 70
+HIGH_PRIORITY_SCORE   = 40   # score below this = HOT lead
+MEDIUM_PRIORITY_SCORE = 70   # score below this = warm lead
 
 # ─── SCHEDULER ────────────────────────────────────────────────
-DAILY_RUN_TIME = "09:00"   # runs every day at 9 AM automatically
+DAILY_RUN_TIME = "09:00"   # local scheduler (backup for non-GitHub runs)

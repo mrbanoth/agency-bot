@@ -10,6 +10,7 @@ on:
 jobs:
   run-bot:
     runs-on: ubuntu-latest
+    timeout-minutes: 120   # 2-hour safety cap (1 city run = ~30-45 min)
 
     env:
       GMAIL_ADDRESS:       ${{ secrets.GMAIL_ADDRESS }}
@@ -34,9 +35,26 @@ jobs:
       - name: Run Agency Bot
         run: python main.py
 
-      - name: Upload leads CSV as artifact
+      - name: Upload leads CSV
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: leads-${{ github.run_id }}
           path: leads.csv
+          if-no-files-found: ignore
+
+      - name: Upload sent log (see who got emailed)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sent-log-${{ github.run_id }}
+          path: sent_log.csv
+          if-no-files-found: ignore
+
+      - name: Upload full run log
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: agency-log-${{ github.run_id }}
+          path: agency_log.txt
           if-no-files-found: ignore
