@@ -1,12 +1,12 @@
 """
-main.py — Master pipeline. Runs the full cycle:
-  Scrape → Audit → Generate Pitch → Save CSV → Email you the digest
-
-RUN ONCE:
-    python main.py
-
-RUN 24/7 SCHEDULED:
-    python scheduler.py
+main.py — Master pipeline:
+  1. Scrape Google Maps (multiple cities)
+  2. Audit each website
+  3. Find business email
+  4. Generate AI pitch
+  5. Send cold email to business
+  6. Check inbox for replies
+  7. Email YOU a full digest
 """
 
 import sys, csv, os, time, traceback
@@ -16,19 +16,18 @@ if hasattr(sys.stdout, "reconfigure"): sys.stdout.reconfigure(encoding="utf-8")
 if hasattr(sys.stderr, "reconfigure"): sys.stderr.reconfigure(encoding="utf-8")
 
 from config import (
-    CITY, BUSINESS_TYPES, MAX_LEADS_PER_RUN,
+    CITIES, BUSINESS_TYPES, MAX_LEADS_PER_RUN,
     OUTPUT_CSV, LOG_FILE,
     HIGH_PRIORITY_SCORE, MEDIUM_PRIORITY_SCORE,
 )
 from pitch_engine import generate_pitch
+from email_finder import find_email
+from outreach_sender import run_outreach
+from reply_checker import check_replies
 from notifier import send_lead_digest, send_error_alert
 
 
-# ──────────────────────────────────────────────────────────────
-# Logging
-# ──────────────────────────────────────────────────────────────
-
-def log(msg: str):
+def log(msg):
     stamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     line  = f"[{stamp}] {msg}"
     print(line)
@@ -36,14 +35,11 @@ def log(msg: str):
         f.write(line + "\n")
 
 
-# ──────────────────────────────────────────────────────────────
-# Website Quality Checker
-# ──────────────────────────────────────────────────────────────
+# ── Website Audit ─────────────────────────────────────────────
 
-def check_website(url: str) -> dict:
-    import requests
+def check_website(url):
+    import requests, re
     from bs4 import BeautifulSoup
-    import re
 
     result = {
         "reachable": False, "has_ssl": False, "fast_load": False,
@@ -51,49 +47,41 @@ def check_website(url: str) -> dict:
         "has_phone": False, "has_cta": False,
         "score": 0, "issues": [],
     }
-
     if not url:
         result["issues"].append("No website at all")
         return result
-
     try:
-        full_url = url if url.startswith("http") else "https://" + url
-        result["has_ssl"] = full_url.startswith("https://")
-        if not result["has_ssl"]:
-            result["issues"].append("No HTTPS")
+        full = url if url.startswith("http") else "https://" + url
+        result["has_ssl"] = full.startswith("https://")
+        if not result["has_ssl"]: result["issues"].append("No HTTPS")
 
-        resp = requests.get(full_url, timeout=8, headers={
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-        })
-        result["reachable"] = resp.status_code == 200
-        load_s = resp.elapsed.total_seconds()
-        result["fast_load"] = load_s < 3.0
-        if not result["fast_load"]:
-            result["issues"].append(f"Slow load ({load_s:.1f}s)")
+        r    = requests.get(full, timeout=8, headers={"User-Agent": "Mozilla/5.0"})
+        load = r.elapsed.total_seconds()
+        result["reachable"]  = r.status_code == 200
+        result["fast_load"]  = load < 3.0
+        if not result["fast_load"]: result["issues"].append(f"Slow load ({load:.1f}s)")
 
-        soup = BeautifulSoup(resp.text, "html.parser")
-        page = resp.text.lower()
+        soup = BeautifulSoup(r.text, "html.parser")
+        page = r.text.lower()
 
         vp = soup.find("meta", attrs={"name": "viewport"})
         result["mobile_friendly"] = vp is not None
-        if not result["mobile_friendly"]:
-            result["issues"].append("Not mobile-friendly")
+        if not result["mobile_friendly"]: result["issues"].append("Not mobile-friendly")
 
-        if not soup.find("title") or not soup.find("title").text.strip():
+        if not (soup.find("title") and soup.find("title").text.strip()):
             result["issues"].append("No page title")
-
         if not soup.find("meta", attrs={"name": "description"}):
             result["issues"].append("No meta description")
 
-        modern = any(s in page for s in ["react", "next.js", "vue", "nuxt", "gatsby"])
-        old    = any(s in page for s in ["wp-content", "jquery-1.", "jquery-2.", "joomla"])
+        modern = any(s in page for s in ["react","next.js","vue","nuxt","gatsby"])
+        old    = any(s in page for s in ["wp-content","jquery-1.","jquery-2.","joomla"])
         result["modern_framework"] = modern
-        if old:   result["issues"].append("Outdated tech (WordPress/old jQuery)")
+        if old:        result["issues"].append("Outdated tech (WordPress/old jQuery)")
         elif not modern: result["issues"].append("No modern framework")
 
         result["has_phone"] = bool(
             soup.find("a", href=lambda h: h and "tel:" in h) or
-            __import__("re").search(r"\+91[\s-]?\d{10}|\b[6-9]\d{9}\b", resp.text)
+            re.search(r"\+91[\s-]?\d{10}|\b[6-9]\d{9}\b", r.text)
         )
         result["has_cta"] = any(
             w in page for w in ["contact us","get a quote","book now","call us","enquire","whatsapp"]
@@ -101,28 +89,23 @@ def check_website(url: str) -> dict:
         if not result["has_phone"]: result["issues"].append("No phone number")
         if not result["has_cta"]:   result["issues"].append("No Call-To-Action")
 
-        score = sum([
-            result["reachable"]       * 15,
-            result["has_ssl"]         * 15,
-            result["fast_load"]       * 15,
-            result["mobile_friendly"] * 20,
-            result["modern_framework"]* 15,
-            result["has_phone"]       * 10,
-            result["has_cta"]         * 10,
+        result["score"] = sum([
+            result["reachable"]        * 15,
+            result["has_ssl"]          * 15,
+            result["fast_load"]        * 15,
+            result["mobile_friendly"]  * 20,
+            result["modern_framework"] * 15,
+            result["has_phone"]        * 10,
+            result["has_cta"]          * 10,
         ])
-        result["score"] = score
-
     except Exception as e:
-        result["issues"].append(f"Unreachable: {str(e)[:60]}")
-
+        result["issues"].append(f"Unreachable: {str(e)[:50]}")
     return result
 
 
-# ──────────────────────────────────────────────────────────────
-# Google Maps Scraper
-# ──────────────────────────────────────────────────────────────
+# ── Google Maps Scraper ───────────────────────────────────────
 
-def scrape_maps(city: str, btype: str, max_n: int) -> list:
+def scrape_maps(city, btype, max_n):
     import urllib.parse
     from playwright.sync_api import sync_playwright
 
@@ -134,7 +117,7 @@ def scrape_maps(city: str, btype: str, max_n: int) -> list:
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True, args=["--no-sandbox"])
             ctx     = browser.new_context(
-                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
                 viewport={"width": 1280, "height": 800},
             )
             page = ctx.new_page()
@@ -155,50 +138,38 @@ def scrape_maps(city: str, btype: str, max_n: int) -> list:
                     seen.add(h); urls.append(h)
                 if len(urls) >= max_n: break
 
-            log(f"    {len(urls)} listings found")
-
             for place_url in urls:
                 try:
                     page.goto(place_url, wait_until="domcontentloaded", timeout=20000)
                     time.sleep(1.8)
-
                     def t(sel):
                         el = page.query_selector(sel)
                         return el.inner_text().strip() if el else ""
-
                     leads.append({
                         "name":     t("h1"),
                         "address":  t('[data-item-id="address"] .fontBodyMedium'),
                         "phone":    t('[data-item-id*="phone"] .fontBodyMedium'),
                         "website":  t('[data-item-id="authority"] .fontBodyMedium'),
                         "rating":   t('.F7nice span[aria-hidden]'),
-                        "category": btype,
-                        "city":     city,
-                        "maps_url": place_url,
+                        "category": btype, "city": city, "maps_url": place_url,
                     })
                     log(f"    ✓ {leads[-1]['name']} | {leads[-1]['website'] or 'NO SITE'}")
-                    time.sleep(1.0)
+                    time.sleep(0.8)
                 except Exception as e:
                     log(f"    ✗ {e}")
-
             browser.close()
     except Exception as e:
         log(f"  [Maps error] {e}")
-
     return leads
 
 
-# ──────────────────────────────────────────────────────────────
-# Enrich leads (audit + pitch)
-# ──────────────────────────────────────────────────────────────
+# ── Enrich (audit + email + pitch) ───────────────────────────
 
-def enrich(leads: list) -> list:
+def enrich(leads):
     enriched = []
     for lead in leads:
-        name = lead.get("name", "?")
-        log(f"  Auditing: {name}")
-        q = check_website(lead.get("website", ""))
-
+        log(f"  Enriching: {lead.get('name','?')}")
+        q = check_website(lead.get("website",""))
         lead["website_score"]  = q["score"]
         lead["website_issues"] = " | ".join(q["issues"])
         lead["priority"] = (
@@ -206,91 +177,86 @@ def enrich(leads: list) -> list:
             "MEDIUM" if q["score"] < MEDIUM_PRIORITY_SCORE else
             "SKIP"
         )
-
         if lead["priority"] != "SKIP":
+            lead["email"] = find_email(lead.get("website",""), lead.get("name",""))
             lead["pitch"] = generate_pitch(
-                name,
-                lead.get("website", ""),
-                q["score"],
-                q["issues"],
+                lead.get("name",""), lead.get("website",""),
+                q["score"], q["issues"]
             )
         else:
+            lead["email"] = ""
             lead["pitch"] = ""
-
         enriched.append(lead)
         time.sleep(0.4)
-
     return enriched
 
 
-# ──────────────────────────────────────────────────────────────
-# CSV — append new leads, skip duplicates
-# ──────────────────────────────────────────────────────────────
+# ── CSV ───────────────────────────────────────────────────────
 
 FIELDS = [
-    "priority","name","category","city","phone","website",
-    "website_score","website_issues","pitch",
-    "address","rating","maps_url","date_found",
+    "priority","name","category","city","phone","email","website",
+    "website_score","website_issues","pitch","address","rating","maps_url","date_found",
 ]
 
-def save_leads(leads: list):
-    existing_names = set()
+def save_leads(leads):
+    existing = set()
     if os.path.exists(OUTPUT_CSV):
         with open(OUTPUT_CSV, "r", encoding="utf-8") as f:
             for row in csv.DictReader(f):
-                existing_names.add(row.get("name", "").strip().lower())
+                existing.add(row.get("name","").strip().lower())
 
-    new_leads = []
+    new = []
     for l in leads:
-        if l.get("name", "").strip().lower() not in existing_names and l["priority"] != "SKIP":
+        if l.get("name","").strip().lower() not in existing and l["priority"] != "SKIP":
             l["date_found"] = datetime.now().strftime("%Y-%m-%d")
-            new_leads.append(l)
+            new.append(l)
 
-    if not new_leads:
-        log("  No new leads to add to CSV.")
-        return []
-
-    file_exists = os.path.exists(OUTPUT_CSV)
-    with open(OUTPUT_CSV, "a", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=FIELDS, extrasaction="ignore")
-        if not file_exists:
-            w.writeheader()
-        w.writerows(sorted(new_leads, key=lambda x: x.get("website_score", 100)))
-
-    log(f"  Saved {len(new_leads)} new leads → {OUTPUT_CSV}")
-    return new_leads
+    if new:
+        exists = os.path.exists(OUTPUT_CSV)
+        with open(OUTPUT_CSV, "a", newline="", encoding="utf-8") as f:
+            w = csv.DictWriter(f, fieldnames=FIELDS, extrasaction="ignore")
+            if not exists: w.writeheader()
+            w.writerows(sorted(new, key=lambda x: x.get("website_score",100)))
+        log(f"  Saved {len(new)} new leads → {OUTPUT_CSV}")
+    return new
 
 
-# ──────────────────────────────────────────────────────────────
-# Main pipeline
-# ──────────────────────────────────────────────────────────────
+# ── Main ─────────────────────────────────────────────────────
 
 def run():
     log("=" * 55)
-    log(f"  AGENCY BOT STARTED  |  City: {CITY}")
+    log(f"  AGENCY BOT  |  Cities: {', '.join(CITIES[:5])}{'...' if len(CITIES)>5 else ''}")
     log("=" * 55)
 
     try:
-        all_leads   = []
-        per_cat     = max(1, MAX_LEADS_PER_RUN // len(BUSINESS_TYPES))
+        all_leads = []
+        per_cat   = max(1, MAX_LEADS_PER_RUN // len(BUSINESS_TYPES))
 
-        for btype in BUSINESS_TYPES:
-            log(f"\n[Phase 1] Scraping: {btype.upper()}")
-            raw     = scrape_maps(CITY, btype, per_cat)
-            log(f"[Phase 2] Auditing {len(raw)} sites ...")
-            scored  = enrich(raw)
-            all_leads.extend(scored)
+        for city in CITIES:
+            for btype in BUSINESS_TYPES:
+                log(f"\n[Scrape] {btype} in {city}")
+                raw    = scrape_maps(city, btype, per_cat)
+                log(f"[Enrich] {len(raw)} leads ...")
+                scored = enrich(raw)
+                all_leads.extend(scored)
 
-        hot = [l for l in all_leads if l["priority"] != "SKIP"]
-        log(f"\n  Total scraped : {len(all_leads)}")
-        log(f"  Hot leads     : {len(hot)}")
-
+        hot       = [l for l in all_leads if l["priority"] != "SKIP"]
         new_leads = save_leads(all_leads)
 
-        log("[Phase 3] Sending email digest ...")
-        send_lead_digest(new_leads if new_leads else hot[:20])
+        log(f"\n  Total scraped : {len(all_leads)}")
+        log(f"  Hot leads     : {len(hot)}")
+        log(f"  New this run  : {len(new_leads)}")
 
-        log("\n  DONE. Check your email + leads.csv")
+        log("\n[Phase 3] Building email queue ...")
+        run_outreach(new_leads)
+
+        log("\n[Phase 4] Checking inbox for replies ...")
+        check_replies()
+
+        log("\n[Phase 5] Sending digest to you ...")
+        send_lead_digest(new_leads or hot[:20])
+
+        log("\n  DONE. Check sandeepnaikb0@gmail.com")
         log("=" * 55)
 
     except Exception:

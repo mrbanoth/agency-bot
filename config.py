@@ -31,7 +31,18 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GROQ_MODEL   = "llama-3.3-70b-versatile"
 
 # ─── SCRAPER SETTINGS ─────────────────────────────────────────
-CITY            = os.getenv("TARGET_CITY", "Hyderabad")
+# Add or remove cities freely. Bot rotates through all of them.
+CITIES = [
+    # Tier 1 — Start here
+    "Hyderabad", "Bangalore", "Mumbai", "Chennai", "Delhi",
+    # Tier 2 — Expand after first week
+    "Pune", "Kolkata", "Ahmedabad", "Jaipur", "Surat",
+    "Lucknow", "Kanpur", "Nagpur", "Visakhapatnam", "Bhopal",
+    # Tier 3 — Smaller cities (less competition, easier to close)
+    "Coimbatore", "Kochi", "Indore", "Vadodara", "Patna",
+]
+# To run only one city: CITIES = ["Hyderabad"]
+
 BUSINESS_TYPES  = [
     "restaurant",
     "dental clinic",
@@ -43,8 +54,13 @@ BUSINESS_TYPES  = [
     "interior designer",
     "coaching classes",
     "NGO",
+    "hospital",
+    "hotel",
+    "real estate agency",
+    "event management",
+    "bakery",
 ]
-MAX_LEADS_PER_RUN = 50
+MAX_LEADS_PER_RUN = 50   # per city per run
 OUTPUT_CSV        = "leads.csv"
 LOG_FILE          = "agency_log.txt"
 

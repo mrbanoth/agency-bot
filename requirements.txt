@@ -4,3 +4,4 @@ playwright
 groq
 python-dotenv
 schedule
+dnspython
