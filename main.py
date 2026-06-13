@@ -137,12 +137,29 @@ def scrape_maps(city, btype, max_n):
 
     try:
         with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True, args=["--no-sandbox","--disable-dev-shm-usage"])
+            browser = p.chromium.launch(
+                headless=True,
+                args=[
+                    "--no-sandbox",
+                    "--disable-dev-shm-usage",
+                    "--disable-gpu",
+                    "--disable-software-rasterizer",
+                ]
+            )
             ctx     = browser.new_context(
                 user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
                 viewport={"width": 1280, "height": 800},
             )
             page = ctx.new_page()
+            
+            # Block heavy resources (images, fonts, media) to save CPU & bandwidth
+            page.route(
+                "**/*",
+                lambda route: route.abort()
+                if route.request.resource_type in ["image", "font", "media"]
+                else route.continue_()
+            )
+            
             page.goto(url, wait_until="domcontentloaded", timeout=30000)
             time.sleep(2)
 
@@ -278,15 +295,33 @@ def run():
 
     try:
         all_leads = []
+        raw_leads_map = {}
 
-        for btype in BUSINESS_TYPES:
-            log(f"\n[Scrape] {btype} in {today_city}")
-            raw = scrape_maps(today_city, btype, LEADS_PER_CATEGORY)
+        log("\n[Phase 1] Scraping Google Maps in parallel (3 categories at a time)...")
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            futures = {
+                executor.submit(scrape_maps, today_city, btype, LEADS_PER_CATEGORY): btype
+                for btype in BUSINESS_TYPES
+            }
+            for fut in as_completed(futures):
+                btype = futures[fut]
+                try:
+                    raw = fut.result()
+                    if raw:
+                        log(f"  [Scrape Done] {btype} in {today_city}: {len(raw)} leads found")
+                        raw_leads_map[btype] = raw
+                except Exception as e:
+                    log(f"  [Scrape Error] {btype}: {e}")
 
-            if raw:
-                log(f"[Enrich] {len(raw)} leads (parallel) ...")
-                scored = enrich_parallel(raw)
-                all_leads.extend(scored)
+        # Collect all raw leads
+        all_raw_leads = []
+        for btype, leads in raw_leads_map.items():
+            all_raw_leads.extend(leads)
+
+        # Now, enrich all of them in parallel
+        if all_raw_leads:
+            log(f"\n[Phase 2] Enriching {len(all_raw_leads)} total leads in parallel...")
+            all_leads = enrich_parallel(all_raw_leads, workers=5)
 
         # ── Stats ──
         high   = [l for l in all_leads if l["priority"] == "HIGH"]
