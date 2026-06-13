@@ -11,7 +11,7 @@ from datetime import datetime
 
 if hasattr(sys.stdout, "reconfigure"): sys.stdout.reconfigure(encoding="utf-8")
 
-from config import GMAIL_ADDRESS, GMAIL_APP_PASSWORD, YOUR_EMAIL, YOUR_NAME, CITY
+from config import GMAIL_ADDRESS, GMAIL_APP_PASSWORD, YOUR_EMAIL, YOUR_NAME, CITIES
 
 
 def _build_html(leads: list, run_time: str) -> str:
@@ -64,7 +64,7 @@ def _build_html(leads: list, run_time: str) -> str:
     <html><body style="font-family:Arial,sans-serif;max-width:1100px;margin:auto;padding:20px">
       <div style="background:#1a1a2e;color:#fff;padding:20px;border-radius:8px">
         <h2 style="margin:0">Agency Bot — Lead Digest</h2>
-        <p style="margin:5px 0;color:#aaa">{run_time} · City: {CITY}</p>
+        <p style="margin:5px 0;color:#aaa">{run_time} · Cities: {", ".join(CITIES[:5])}…</p>
       </div>
       <div style="background:#f8f9fa;padding:15px;border-radius:8px;margin:15px 0">
         <b>Summary:</b> &nbsp;
@@ -96,7 +96,7 @@ def send_lead_digest(leads: list):
     high_count = len([l for l in hot if l.get("priority") == "HIGH"])
 
     msg = MIMEMultipart("alternative")
-    msg["Subject"] = f"🔥 {high_count} Hot Leads Found — {CITY} ({run_time})"
+    msg["Subject"] = f"🔥 {high_count} Hot Leads Found — {CITIES[0]} + more ({run_time})"
     msg["From"]    = GMAIL_ADDRESS
     msg["To"]      = YOUR_EMAIL
 
