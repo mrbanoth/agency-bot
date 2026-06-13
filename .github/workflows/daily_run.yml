@@ -1,0 +1,43 @@
+name: Agency Bot — Daily Lead Run
+
+on:
+  schedule:
+    # 9:00 AM IST every day (IST = UTC+5:30, so 3:30 AM UTC)
+    - cron: '30 3 * * *'
+  workflow_dispatch:
+    # Also lets you trigger it manually from GitHub with one click
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+
+    env:
+      GMAIL_ADDRESS:       ${{ secrets.GMAIL_ADDRESS }}
+      GMAIL_APP_PASSWORD:  ${{ secrets.GMAIL_APP_PASSWORD }}
+      GROQ_API_KEY:        ${{ secrets.GROQ_API_KEY }}
+      TARGET_CITY:         Hyderabad
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install Playwright browser
+        run: playwright install chromium --with-deps
+
+      - name: Run Agency Bot
+        run: python main.py
+
+      - name: Upload leads CSV as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: leads-${{ github.run_id }}
+          path: leads.csv
+          if-no-files-found: ignore

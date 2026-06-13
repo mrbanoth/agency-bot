@@ -1,0 +1,7 @@
+# Never push secrets or junk to GitHub
+.env
+__pycache__/
+*.pyc
+venv/
+*.json
+agency_log.txt
