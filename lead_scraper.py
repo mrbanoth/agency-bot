@@ -23,9 +23,10 @@ import requests
 from bs4 import BeautifulSoup
 
 from config import (
-    CITY, BUSINESS_TYPES, MAX_LEADS_PER_RUN, OUTPUT_CSV,
+    CITIES, BUSINESS_TYPES, MAX_LEADS_PER_RUN, OUTPUT_CSV,
     HIGH_PRIORITY_SCORE, MEDIUM_PRIORITY_SCORE,
 )
+CITY = CITIES[0]
 
 
 # ──────────────────────────────────────────────
