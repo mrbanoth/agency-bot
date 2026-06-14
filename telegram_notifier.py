@@ -110,6 +110,8 @@ def handle_commands():
                     "🤖 <b>Agency Bot Commands:</b>\n\n"
                     "<b>/status</b> — Get overall bot stats\n"
                     "<b>/leads</b> — List top 5 recent hot leads\n"
+                    "<b>/projects</b> — View confirmed freelance projects\n"
+                    "<b>/earnings</b> — Calculate potential earnings\n"
                     "<b>/replies</b> — Show recent client email replies\n"
                     "<b>/help</b> — Show this help message"
                 )
@@ -191,6 +193,57 @@ def handle_commands():
                 else:
                     reply += "<i>No projects confirmed yet. Keep checking!</i>"
 
+                send_message(reply)
+
+            elif cmd == "/projects":
+                qualified_leads = []
+                if os.path.exists("conversations.json"):
+                    try:
+                        with open("conversations.json", "r", encoding="utf-8") as f:
+                            convs = json.load(f)
+                            for email, c in convs.items():
+                                if c.get("stage") == "QUALIFIED":
+                                    biz = c.get("business_name") or "Unknown Business"
+                                    city = c.get("city") or "Hyderabad"
+                                    phone = c.get("phone") or "—"
+                                    qualified_leads.append(
+                                        f"• <b>{escape_html(biz)}</b> ({escape_html(city)})\n"
+                                        f"  📧 Email: <code>{escape_html(email)}</code>\n"
+                                        f"  📞 Phone: <code>{escape_html(phone)}</code>\n"
+                                    )
+                    except Exception:
+                        pass
+
+                if not qualified_leads:
+                    reply = "ℹ️ No projects confirmed yet. Keep checking!"
+                else:
+                    reply = f"🏆 <b>Confirmed Freelance Projects ({len(qualified_leads)} total):</b>\n\n"
+                    reply += "\n".join(qualified_leads)
+
+                send_message(reply)
+
+            elif cmd == "/earnings" or cmd == "/money":
+                qualified_count = 0
+                if os.path.exists("conversations.json"):
+                    try:
+                        with open("conversations.json", "r", encoding="utf-8") as f:
+                            convs = json.load(f)
+                            for c in convs.values():
+                                if c.get("stage") == "QUALIFIED":
+                                    qualified_count += 1
+                    except Exception:
+                        pass
+
+                price_per_site = 8000
+                potential_revenue = qualified_count * price_per_site
+
+                reply = (
+                    "💰 <b>Freelance Earnings Report</b>\n\n"
+                    f"🏆 Confirmed Projects: <b>{qualified_count}</b>\n"
+                    f"🏷️ Standard Rate: <b>₹{price_per_site:,} / website</b>\n\n"
+                    f"💵 <b>Potential Earnings: ₹{potential_revenue:,} INR</b>\n\n"
+                    "🚀 <i>Keep pitching and closing projects to increase your revenue!</i>"
+                )
                 send_message(reply)
 
             elif cmd == "/leads":
