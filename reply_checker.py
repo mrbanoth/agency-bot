@@ -358,10 +358,10 @@ def _alert_hot_lead(sender_email: str, sender_name: str, subject: str, body: str
             s.send_message(msg)
         print(f"  🚨 HOT LEAD ALERT sent to {YOUR_EMAIL} for {biz or sender_name}!")
         
-        # Trigger Telegram and Twilio Alerts
+        # Trigger Telegram Alerts (Twilio call alerts disabled to avoid costs)
         issues = lead_ctx.get("issues", "")
         telegram_notifier.alert_hot_lead(biz or sender_name, city, phone, sender_email, web, issues)
-        voice_caller.call_sandeep(biz or sender_name, city, phone)
+        # voice_caller.call_sandeep(biz or sender_name, city, phone)
         
     except Exception as e:
         print(f"  [Alert] Error: {e}")

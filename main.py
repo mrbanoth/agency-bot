@@ -401,8 +401,8 @@ def run():
         run_second_followups()
 
         # ── Voice calls (14-day no-reply HOT leads) ──
-        log("\n[Phase 3d] Making Twilio voice calls (14-day no-reply HOT leads) ...")
-        calls_made = run_call_outreach()
+        log("\n[Phase 3d] Making Twilio voice calls (14-day no-reply HOT leads) [DISABLED]")
+        calls_made = 0
 
         # ── Check inbox for replies + auto-respond ──
         log("\n[Phase 4] Checking inbox for replies ...")
