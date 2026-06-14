@@ -360,7 +360,7 @@ def _alert_hot_lead(sender_email: str, sender_name: str, subject: str, body: str
         
         # Trigger Telegram Alerts (Twilio call alerts disabled to avoid costs)
         issues = lead_ctx.get("issues", "")
-        telegram_notifier.alert_hot_lead(biz or sender_name, city, phone, sender_email, web, issues)
+        telegram_notifier.alert_hot_lead(biz or sender_name, city, phone, sender_email, web, issues, body)
         # voice_caller.call_sandeep(biz or sender_name, city, phone)
         
     except Exception as e:

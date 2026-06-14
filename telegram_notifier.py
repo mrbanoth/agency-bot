@@ -28,7 +28,10 @@ def send_message(text: str) -> bool:
         print(f"  [Telegram] Send error: {e}")
         return False
 
-def alert_hot_lead(business_name, city, phone, email, website, issues):
+def alert_hot_lead(business_name, city, phone, email, website, issues, reply_body=""):
+    trimmed_body = escape_html(reply_body[:1000]) if reply_body else ""
+    body_section = f"\n💬 <b>Client Message:</b>\n<i>{trimmed_body}</i>\n" if trimmed_body else ""
+
     text = (
         f"🚨 <b>HOT LEAD CONFIRMED</b> 🚨\n\n"
         f"<b>Business:</b> {escape_html(business_name)}\n"
@@ -36,7 +39,8 @@ def alert_hot_lead(business_name, city, phone, email, website, issues):
         f"<b>Phone:</b> {escape_html(phone) or '—'}\n"
         f"<b>Email:</b> {escape_html(email) or '—'}\n"
         f"<b>Website:</b> {escape_html(website) or '—'}\n"
-        f"<b>Issues:</b> {escape_html(issues) or '—'}\n\n"
+        f"<b>Issues:</b> {escape_html(issues) or '—'}\n"
+        f"{body_section}\n"
         f"📞 Please contact them immediately!"
     )
     return send_message(text)
