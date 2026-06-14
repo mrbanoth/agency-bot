@@ -1,0 +1,52 @@
+name: Agency Bot — Check Replies & Telegram Commands
+
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    # Run every 30 minutes
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+    # Allow manual runs from GitHub UI
+
+jobs:
+  check-updates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    permissions:
+      contents: write   # needed to commit tracking logs back to repo
+
+    env:
+      GMAIL_ADDRESS:       ${{ secrets.GMAIL_ADDRESS }}
+      GMAIL_APP_PASSWORD:  ${{ secrets.GMAIL_APP_PASSWORD }}
+      GROQ_API_KEY:        ${{ secrets.GROQ_API_KEY }}
+      TELEGRAM_BOT_TOKEN:  ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID:    ${{ secrets.TELEGRAM_CHAT_ID }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Check Updates & Replies
+        run: python check_updates.py
+
+      # ── Persist tracking logs back to GitHub repository ──
+      - name: Save tracking files to repo
+        if: always()
+        run: |
+          git config user.name  "Agency Bot"
+          git config user.email "bot@agency-bot.local"
+          git add -f replied_log.csv conversations.json agency_log.txt telegram_state.json 2>/dev/null || true
+          git diff --staged --quiet || git commit -m "bot: update response logs [skip ci]"
+          git push || echo "Nothing to push"
