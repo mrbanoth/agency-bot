@@ -17,6 +17,7 @@ from config import (
     GMAIL_ADDRESS, GMAIL_APP_PASSWORD,
     YOUR_NAME, YOUR_PHONE, YOUR_PORTFOLIO,
 )
+from reply_checker import register_outreach
 
 SENT_LOG    = "sent_log.csv"
 OPT_OUT_LOG = "optout_log.csv"
@@ -158,6 +159,7 @@ def run_outreach(leads: list):
 
         if _send_gmail(email, subject, body):
             _log_sent(lead, email)
+            register_outreach(lead, email)   # track in conversations.json
             sent_count += 1
             print(f"     ✅ SENT ({_count_today()}/{DAILY_LIMIT} today)")
         else:

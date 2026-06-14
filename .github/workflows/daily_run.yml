@@ -5,12 +5,15 @@ on:
     # 9:00 AM IST every day (IST = UTC+5:30, so 3:30 AM UTC)
     - cron: '30 3 * * *'
   workflow_dispatch:
-    # Also lets you trigger it manually from GitHub with one click
+    # Trigger manually from GitHub with one click
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
     timeout-minutes: 120   # 2-hour safety cap (1 city run = ~30-45 min)
+
+    permissions:
+      contents: write   # needed to commit tracking files back to repo
 
     env:
       GMAIL_ADDRESS:       ${{ secrets.GMAIL_ADDRESS }}
@@ -35,7 +38,21 @@ jobs:
       - name: Run Agency Bot
         run: python main.py
 
-      - name: Upload leads CSV
+      # ── Persist tracking files so they survive between runs ──
+      # Without this, leads.csv / sent_log.csv / conversations.json
+      # are deleted when the runner shuts down. The bot would email
+      # the same businesses every day. [skip ci] prevents a loop.
+      - name: Save tracking files to repo
+        if: always()
+        run: |
+          git config user.name  "Agency Bot"
+          git config user.email "bot@agency-bot.local"
+          git add -f leads.csv sent_log.csv replied_log.csv conversations.json agency_log.txt 2>/dev/null || true
+          git diff --staged --quiet || git commit -m "bot: update tracking files [skip ci]"
+          git push || echo "Nothing to push"
+
+      # ── Also upload as downloadable artifacts ──
+      - name: Download leads CSV
         uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -43,7 +60,7 @@ jobs:
           path: leads.csv
           if-no-files-found: ignore
 
-      - name: Upload sent log (see who got emailed)
+      - name: Download sent log
         uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -51,10 +68,10 @@ jobs:
           path: sent_log.csv
           if-no-files-found: ignore
 
-      - name: Upload full run log
+      - name: Download conversations log
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: agency-log-${{ github.run_id }}
-          path: agency_log.txt
+          name: conversations-${{ github.run_id }}
+          path: conversations.json
           if-no-files-found: ignore
