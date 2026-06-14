@@ -136,31 +136,61 @@ def handle_commands():
 
                 # Count from conversations.json (tracker)
                 total_convs = 0
+                cold_sent = 0
+                follow_up_sent = 0
+                second_follow_up_sent = 0
+                replied = 0
+                handoff = 0
                 qualified = 0
                 opted_out = 0
+                qualified_leads = []
+
                 if os.path.exists("conversations.json"):
                     try:
                         with open("conversations.json", "r", encoding="utf-8") as f:
                             convs = json.load(f)
                             total_convs = len(convs)
-                            for c in convs.values():
+                            for email, c in convs.items():
                                 st = c.get("stage", "")
-                                if st == "QUALIFIED":
+                                if st == "COLD_SENT":
+                                    cold_sent += 1
+                                elif st == "FOLLOW_UP_SENT":
+                                    follow_up_sent += 1
+                                elif st == "SECOND_FOLLOWUP_SENT":
+                                    second_follow_up_sent += 1
+                                elif st == "REPLIED":
+                                    replied += 1
+                                elif st == "HANDOFF":
+                                    handoff += 1
+                                elif st == "QUALIFIED":
                                     qualified += 1
+                                    biz = c.get("business_name") or "Unknown Business"
+                                    city = c.get("city") or "Hyderabad"
+                                    qualified_leads.append(f"• <b>{escape_html(biz)}</b> ({escape_html(city)}) — <code>{escape_html(email)}</code>")
                                 elif st == "OPTED_OUT":
                                     opted_out += 1
                     except Exception:
                         pass
 
                 reply = (
-                    "📊 <b>Bot Status Report</b>\n\n"
-                    f"<b>Total Leads Scraped:</b> {total_leads}\n"
-                    f"🔥 High Priority: {high_leads}\n"
-                    f"⚡ Medium Priority: {medium_leads}\n\n"
-                    f"<b>Conversations Tracked:</b> {total_convs}\n"
-                    f"✅ Qualified (Confirm): {qualified}\n"
-                    f"⊘ Opted Out: {opted_out}\n"
+                    "📊 <b>Bot Pipeline Report</b>\n\n"
+                    f"<b>Total Leads Scraped:</b> {total_leads} (🔥 High: {high_leads} | ⚡ Med: {medium_leads})\n\n"
+                    f"<b>✉️ Email Outreach Pipeline:</b>\n"
+                    f"└─ 📧 Cold Emails Sent: <b>{cold_sent}</b>\n"
+                    f"└─ 🔄 First Follow-ups: <b>{follow_up_sent}</b>\n"
+                    f"└─ 🔁 Second Follow-ups: <b>{second_follow_up_sent}</b>\n\n"
+                    f"<b>💬 Conversations:</b>\n"
+                    f"└─ 💬 Active Client Replies: <b>{replied}</b>\n"
+                    f"└─ ⚠️ Handoffs to Sandeep: <b>{handoff}</b>\n"
+                    f"└─ ⊘ Opted Out: <b>{opted_out}</b>\n\n"
+                    f"🏆 <b>Confirmed Projects (Hire Requests): {qualified}</b>\n"
                 )
+
+                if qualified_leads:
+                    reply += "\n" + "\n".join(qualified_leads)
+                else:
+                    reply += "<i>No projects confirmed yet. Keep checking!</i>"
+
                 send_message(reply)
 
             elif cmd == "/leads":
