@@ -22,12 +22,16 @@ from config import (
     CITIES, BUSINESS_TYPES, OUTPUT_CSV, LOG_FILE,
     HIGH_PRIORITY_SCORE, MEDIUM_PRIORITY_SCORE,
     LEADS_PER_CATEGORY, BRAND_BLOCKLIST,
+    DAILY_CALL_LIMIT,
 )
 from pitch_engine import generate_pitch
 from email_finder import find_email
 from outreach_sender import run_outreach
+from follow_up import run_follow_ups, run_second_followups
 from reply_checker import check_replies
 from notifier import send_lead_digest, send_error_alert
+import telegram_notifier
+import voice_caller
 
 
 def log(msg):
@@ -272,14 +276,58 @@ def save_leads(leads):
             l["date_found"] = datetime.now().strftime("%Y-%m-%d")
             new.append(l)
 
-    if new:
-        exists = os.path.exists(OUTPUT_CSV)
-        with open(OUTPUT_CSV, "a", newline="", encoding="utf-8") as f:
-            w = csv.DictWriter(f, fieldnames=FIELDS, extrasaction="ignore")
-            if not exists: w.writeheader()
-            w.writerows(sorted(new, key=lambda x: x.get("website_score", 100)))
-        log(f"  Saved {len(new)} new leads → {OUTPUT_CSV}")
-    return new
+        if new:
+            exists = os.path.exists(OUTPUT_CSV)
+            with open(OUTPUT_CSV, "a", newline="", encoding="utf-8") as f:
+                w = csv.DictWriter(f, fieldnames=FIELDS, extrasaction="ignore")
+                if not exists: w.writeheader()
+                w.writerows(sorted(new, key=lambda x: x.get("website_score", 100)))
+            log(f"  Saved {len(new)} new leads → {OUTPUT_CSV}")
+        return new
+
+
+def run_call_outreach() -> int:
+    """Call HIGH priority leads after 14 days of silence since cold email."""
+    all_convs = tracker.get_all()
+    
+    candidates = []
+    for email, data in all_convs.items():
+        stage = data.get("stage", "")
+        if (stage in ("COLD_SENT", "FOLLOW_UP_SENT", "SECOND_FOLLOWUP_SENT")
+            and data.get("priority") == "HIGH"
+            and not data.get("call_attempted", False)
+            and tracker.days_since(data.get("cold_sent_date", "")) >= 14):
+            candidates.append((email, data))
+
+    print(f"  [Twilio Outreach] {len(candidates)} high priority leads ready for call outreach")
+
+    if not candidates:
+        return 0
+
+    called = 0
+    for email, data in candidates:
+        if called >= DAILY_CALL_LIMIT:
+            print(f"  [Twilio Outreach] Daily call limit ({DAILY_CALL_LIMIT}) reached.")
+            break
+            
+        phone = data.get("phone", "")
+        if not phone:
+            continue
+            
+        name = data.get("business_name", "")
+        city = data.get("city", "")
+        
+        print(f"\n  📞 Placed Twilio call → {name} ({phone})")
+        if voice_caller.call_client(phone, name, city):
+            tracker.update(email, call_attempted=True, last_contact=datetime.now().strftime("%Y-%m-%d"))
+            called += 1
+            print(f"     ✅ Call placed ({called}/{DAILY_CALL_LIMIT} today)")
+            if called < DAILY_CALL_LIMIT:
+                time.sleep(10)
+        else:
+            print(f"     ❌ Call failed")
+            
+    return called
 
 
 # ── Main ──────────────────────────────────────────────────────
@@ -344,7 +392,19 @@ def run():
         log("\n[Phase 3] Sending cold emails ...")
         run_outreach(new_leads)
 
-        # ── Check inbox ──
+        # ── Follow-up emails (5-day no-reply leads) ──
+        log("\n[Phase 3b] Sending follow-up emails (5-day no-reply leads) ...")
+        run_follow_ups()
+
+        # ── Second follow-up emails (10-day no-reply leads) ──
+        log("\n[Phase 3c] Sending second follow-up emails (10-day no-reply leads) ...")
+        run_second_followups()
+
+        # ── Voice calls (14-day no-reply HOT leads) ──
+        log("\n[Phase 3d] Making Twilio voice calls (14-day no-reply HOT leads) ...")
+        calls_made = run_call_outreach()
+
+        # ── Check inbox for replies + auto-respond ──
         log("\n[Phase 4] Checking inbox for replies ...")
         check_replies()
 
@@ -352,7 +412,13 @@ def run():
         log("\n[Phase 5] Sending digest to you ...")
         send_lead_digest(new_leads or hot[:20])
 
-        log(f"\n  ✅ DONE — check sandeepnaikb0@gmail.com")
+        # ── Telegram Summary Digest ──
+        log("\n[Phase 6] Sending daily digest to Telegram ...")
+        telegram_notifier.send_daily_digest(
+            today_city, len(high), len(medium), len(new_leads), calls_made
+        )
+
+        log(f"\n  ✅ DONE — check sandeepnaikb0@gmail.com and Telegram")
         log("=" * 60)
 
     except Exception:

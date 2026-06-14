@@ -1,103 +1,197 @@
 """
-outreach_sender.py
-Automatically sends personalised cold emails to hot leads via Gmail.
-- Max 20/day to keep Gmail safe
-- Tracks every send in sent_log.csv — no duplicates ever
-- Skips anyone who replied "not interested"
+outreach_sender.py — Automated cold email sender
+
+Features:
+  - 3 rotating email templates (A/B/C) — avoids spam filters
+  - Max 20 emails/day — keeps Gmail account safe
+  - Random 2–4 min gaps between sends — looks human
+  - Never emails the same business twice (tracks in sent_log.csv)
+  - Registers every sent email in conversations.json via tracker.py
 """
 
-import sys, csv, os, time, smtplib, ssl, random
+import sys, csv, os, time, smtplib, ssl, random, hashlib
 from datetime import datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 if hasattr(sys.stdout, "reconfigure"): sys.stdout.reconfigure(encoding="utf-8")
 
+import tracker
 from config import (
     GMAIL_ADDRESS, GMAIL_APP_PASSWORD,
     YOUR_NAME, YOUR_PHONE, YOUR_PORTFOLIO,
 )
-from reply_checker import register_outreach
 
 SENT_LOG    = "sent_log.csv"
-OPT_OUT_LOG = "optout_log.csv"
 DAILY_LIMIT = 20
+
+
+# ── 3 Email template variants ──────────────────────────────────
+# Rotated per lead based on business name hash — looks different
+# to spam filters, increases deliverability and reply rates.
+
+def _variant(lead: dict) -> str:
+    """Pick A, B, or C consistently for this business."""
+    h = int(hashlib.md5(lead.get("name","x").encode()).hexdigest(), 16)
+    return ["A","B","C"][h % 3]
 
 
 def _build_email(lead: dict) -> tuple:
     name     = lead.get("name", "Team")
+    first    = name.split()[0] if name else name
     issues   = [i.strip() for i in lead.get("website_issues","").split("|") if i.strip()]
-    top3     = issues[:3]
     has_site = bool(lead.get("website","").strip())
-    category = lead.get("category","business")
-    city     = lead.get("city","your city")
+    category = lead.get("category", "business")
+    city     = lead.get("city", "your city")
+    top_issue = issues[0] if issues else "it's not optimised for mobile or Google"
+    variant  = _variant(lead)
 
+    # ── No website at all ──────────────────────────────────────
     if not has_site:
-        subject = f"Quick question about {name}'s online presence"
-        body = f"""Hi {name},
+        if variant == "A":
+            subject = f"Quick question about {name}"
+            body = f"""Hi {first},
 
-I was searching for {category} services in {city} on Google and couldn't find {name} online.
+I was looking up {category} businesses in {city} and noticed {name} doesn't have a website yet.
 
-You're likely getting customers through word-of-mouth — which is great. But you're missing everyone who searches Google first, and that's 80% of new customers today.
+Today, 8 out of 10 customers search Google before choosing a business. Without a website, you're invisible to almost all of them.
 
-I'm Sandeep, a web developer from Hyderabad. I build fast, professional websites for local businesses that load under 1 second, work on mobile, and show up on Google.
+I'm Sandeep, a web developer from Hyderabad. I build clean, fast websites for local businesses that load in under 1 second, look great on phones, and actually show up on Google.
 
-Can I show you a free concept of what a {name} website could look like? No commitment at all.
+Can I put together a free concept for {name}? No commitment — just to show you what's possible.
 
 Best,
-{YOUR_NAME}
-📞 {YOUR_PHONE}
-🌐 {YOUR_PORTFOLIO}
+Sandeep
+{YOUR_PHONE}
+{YOUR_PORTFOLIO}
 
-(Reply "not interested" anytime and I won't message again.)"""
+(Reply "not interested" and I won't message again.)"""
 
+        elif variant == "B":
+            subject = f"{name} — I couldn't find you online"
+            body = f"""Hi {first},
+
+I searched for {name} online while researching {category} businesses in {city} — I couldn't find a website for you.
+
+That means customers who search Google for your services are going straight to your competitors instead.
+
+I specialise in building websites for small local businesses — fast, mobile-friendly, and Google-ready. Most of my clients start getting more calls within the first month.
+
+I'd love to show you a free mock-up of what a {name} website could look like. Would that be useful?
+
+Best,
+Sandeep
+{YOUR_PHONE}
+{YOUR_PORTFOLIO}
+
+(Reply "not interested" anytime and I won't contact again.)"""
+
+        else:  # C
+            subject = f"Free website concept for {name}?"
+            body = f"""Hi {first},
+
+I build websites for {category} businesses in India, and I noticed {name} doesn't have one yet.
+
+I'd like to offer you something for free — a proper website concept designed specifically for {name}, showing what your homepage could look like, what pages you'd have, and how you'd appear on Google.
+
+No obligation. Just a gift, because I'm confident you'll like what you see.
+
+Interested?
+
+Sandeep
+{YOUR_PHONE}
+{YOUR_PORTFOLIO}
+
+(Reply "stop" to opt out.)"""
+
+    # ── Has a website with issues ──────────────────────────────
     else:
-        issues_block = "\n".join(f"  • {i}" for i in top3) if top3 else "  • Speed and mobile experience could be improved"
-        subject = f"Found a few issues on {name}'s website"
-        body = f"""Hi {name},
+        issues_block = "\n".join(f"• {i}" for i in issues[:3]) if issues else "• Mobile experience and loading speed could be improved"
 
-I came across {name}'s website while looking for {category} in {city} and noticed a few things that might be costing you customers:
+        if variant == "A":
+            subject = f"Found a few issues on {name}'s website"
+            body = f"""Hi {first},
+
+I came across {name}'s website while looking for {category} in {city} and ran a quick audit. Found a few things that might be costing you customers:
 
 {issues_block}
 
-I'm Sandeep, a web developer from Hyderabad. I build modern websites using Next.js that load in under 1 second and work perfectly on every device.
+I'm Sandeep, a web developer from Hyderabad. I build modern websites that fix exactly these kinds of issues — fast, mobile-first, and designed to convert visitors into customers.
 
-I'd love to show you a free concept of what an improved {name} site could look like — takes me 20 minutes and no commitment from you.
+I'd love to show you a free improvement concept for {name}. Takes me 20 minutes and no commitment from you at all.
 
-Worth a quick chat?
+Worth a look?
 
-Best,
-{YOUR_NAME}
-📞 {YOUR_PHONE}
-🌐 {YOUR_PORTFOLIO}
+Sandeep
+{YOUR_PHONE}
+{YOUR_PORTFOLIO}
 
-(Reply "not interested" anytime and I won't message again.)"""
+(Reply "not interested" anytime.)"""
+
+        elif variant == "B":
+            subject = f"Your website is losing you customers, {first}"
+            body = f"""Hi {first},
+
+I checked {name}'s website today and noticed something important:
+
+{issues_block}
+
+These are the exact things that make potential customers leave your site and go to a competitor. The good news — they're all fixable.
+
+I'm Sandeep, a web developer from Hyderabad. I specialise in rebuilding local business websites to fix these issues and bring in more customers.
+
+Can I send you a quick concept of what an improved {name} site could look like? Free, no strings attached.
+
+Sandeep
+{YOUR_PHONE}
+{YOUR_PORTFOLIO}
+
+(Reply "stop" to opt out.)"""
+
+        else:  # C
+            subject = f"Quick note about {name}'s website"
+            body = f"""Hi {first},
+
+While looking for {category} in {city}, I found {name}'s website. I noticed: {top_issue.lower()}.
+
+That's one of the top reasons customers leave a site without getting in touch — and it's an easy fix.
+
+I build websites for local businesses in India — clean, fast, mobile-friendly. I'd love to put together a free redesign concept specifically for {name}.
+
+Would you be open to taking a look?
+
+Sandeep
+{YOUR_PHONE}
+{YOUR_PORTFOLIO}
+
+(Reply "not interested" to opt out.)"""
 
     return subject, body
 
 
+# ── Tracking ───────────────────────────────────────────────────
+
 def _load_sent() -> set:
     seen = set()
-    for f in [SENT_LOG, OPT_OUT_LOG]:
-        if not os.path.exists(f): continue
-        with open(f, "r", encoding="utf-8") as fh:
-            for row in csv.DictReader(fh):
-                seen.add(row.get("email","").lower())
-                seen.add(row.get("business_name","").lower())
+    if not os.path.exists(SENT_LOG): return seen
+    with open(SENT_LOG, "r", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            seen.add(row.get("email","").lower())
+            seen.add(row.get("business_name","").lower())
     return seen
 
 
 def _count_today() -> int:
     if not os.path.exists(SENT_LOG): return 0
     today = datetime.now().strftime("%Y-%m-%d")
-    with open(SENT_LOG,"r",encoding="utf-8") as f:
+    with open(SENT_LOG, "r", encoding="utf-8") as f:
         return sum(1 for r in csv.DictReader(f) if r.get("date","").startswith(today))
 
 
 def _log_sent(lead: dict, email: str):
     exists = os.path.exists(SENT_LOG)
-    with open(SENT_LOG,"a",newline="",encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=["date","business_name","email","city","category"])
+    with open(SENT_LOG, "a", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=["date","business_name","email","city","category","variant"])
         if not exists: w.writeheader()
         w.writerow({
             "date":          datetime.now().strftime("%Y-%m-%d %H:%M"),
@@ -105,12 +199,15 @@ def _log_sent(lead: dict, email: str):
             "email":         email,
             "city":          lead.get("city",""),
             "category":      lead.get("category",""),
+            "variant":       _variant(lead),
         })
 
 
+# ── Gmail send ─────────────────────────────────────────────────
+
 def _send_gmail(to: str, subject: str, body: str) -> bool:
     if not GMAIL_APP_PASSWORD:
-        print("  [Sender] No GMAIL_APP_PASSWORD in .env — skipping")
+        print("  [Sender] No GMAIL_APP_PASSWORD — skipping. Add it to GitHub Secrets.")
         return False
     try:
         msg = MIMEMultipart()
@@ -129,10 +226,13 @@ def _send_gmail(to: str, subject: str, body: str) -> bool:
         return False
 
 
+# ── Main function ──────────────────────────────────────────────
+
 def run_outreach(leads: list):
+    """Send cold emails to new hot/medium leads. Max 20/day."""
     sent_today = _count_today()
     if sent_today >= DAILY_LIMIT:
-        print(f"  [Sender] Daily limit ({DAILY_LIMIT}) reached — resuming tomorrow")
+        print(f"  [Sender] Daily limit ({DAILY_LIMIT}) already reached — resuming tomorrow")
         return
 
     already = _load_sent()
@@ -144,31 +244,33 @@ def run_outreach(leads: list):
         and l.get("name","").lower() not in already
     ]
 
-    print(f"  [Sender] {len(queue)} queued | {sent_today}/{DAILY_LIMIT} sent today")
+    print(f"  [Sender] {len(queue)} in queue | {sent_today}/{DAILY_LIMIT} sent today")
 
     sent_count = 0
     for lead in queue:
         if _count_today() >= DAILY_LIMIT:
-            print(f"  [Sender] Daily limit ({DAILY_LIMIT}) hit — done for today ✓")
+            print(f"  [Sender] Daily limit hit — done ✓")
             break
 
-        email = lead["email"]
+        email   = lead["email"]
         subject, body = _build_email(lead)
-        print(f"\n  📧 Sending to: {lead.get('name')} <{email}>")
-        print(f"     Subject: {subject}")
+        var     = _variant(lead)
+
+        print(f"\n  📧 [{var}] → {lead.get('name')} <{email}>")
+        print(f"     {subject}")
 
         if _send_gmail(email, subject, body):
             _log_sent(lead, email)
-            register_outreach(lead, email)   # track in conversations.json
+            tracker.register(lead, email)   # track in conversations.json
             sent_count += 1
             print(f"     ✅ SENT ({_count_today()}/{DAILY_LIMIT} today)")
         else:
-            print(f"     ❌ Failed — check GMAIL_APP_PASSWORD secret")
+            print(f"     ❌ Failed")
 
-        # Random 2–4 min gap between sends — looks human to Gmail
-        if lead != queue[-1]:
+        # Random 2–4 min gap — mimics human sending pattern
+        if lead != queue[-1] and _count_today() < DAILY_LIMIT:
             wait = random.randint(120, 240)
-            print(f"     ⏱  Waiting {wait//60}m {wait%60}s before next send ...")
+            print(f"     ⏱  Waiting {wait//60}m {wait%60}s ...")
             time.sleep(wait)
 
     print(f"\n  [Sender] Run complete — {sent_count} emails sent this run")

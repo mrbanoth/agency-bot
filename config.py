@@ -30,6 +30,9 @@ GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD", "")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GROQ_MODEL   = "llama-3.3-70b-versatile"
 
+# WhatsApp and AI calls removed — they cost money.
+# This bot is 100% free using Gmail only.
+
 # ─── SCRAPER SETTINGS ─────────────────────────────────────────
 # Bot rotates through all cities — 1 city per day automatically.
 # Day 1 = Hyderabad, Day 2 = Bangalore, etc. Cycles forever.
@@ -44,21 +47,22 @@ CITIES = [
 ]
 
 BUSINESS_TYPES = [
-    "restaurant",
+    # Small local businesses — easiest to close, need websites most
+    "local restaurant",
     "dental clinic",
     "boutique",
-    "gym",
-    "school",
-    "travel agency",
+    "coaching classes",
     "chartered accountant",
     "interior designer",
-    "coaching classes",
-    "NGO",
-    "hospital",
-    "hotel",
-    "real estate agency",
+    "travel agency",
     "event management",
     "bakery",
+    "NGO",
+    "local gym",
+    "real estate agent",
+    "photography studio",
+    "beauty parlour",
+    "tuition centre",
 ]
 
 LEADS_PER_CATEGORY = 3    # 3 leads × 15 types = ~45 per city per run
@@ -97,6 +101,22 @@ BRAND_BLOCKLIST = [
 # ─── QUALITY THRESHOLDS ───────────────────────────────────────
 HIGH_PRIORITY_SCORE   = 40   # score below this = HOT lead
 MEDIUM_PRIORITY_SCORE = 70   # score below this = warm lead
+
+# ─── FOLLOW-UP SETTINGS ───────────────────────────────────────
+FOLLOW_UP_DAYS = 5   # days of silence before sending follow-up email
+
+# ─── TELEGRAM & TWILIO SETTINGS ───────────────────────────────
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_CHAT_ID   = os.getenv("TELEGRAM_CHAT_ID", "")
+TWILIO_ACCOUNT_SID  = os.getenv("TWILIO_ACCOUNT_SID", "")
+TWILIO_AUTH_TOKEN   = os.getenv("TWILIO_AUTH_TOKEN", "")
+TWILIO_FROM_NUMBER  = os.getenv("TWILIO_FROM_NUMBER", "")
+
+DAILY_CALL_LIMIT    = 3
+CALL_WINDOW_START   = 10   # 10AM IST
+CALL_WINDOW_END     = 18   # 6PM IST
+SECOND_FOLLOWUP_DAYS = 10
+CALL_FOLLOWUP_DAYS  = 14
 
 # ─── SCHEDULER ────────────────────────────────────────────────
 DAILY_RUN_TIME = "09:00"   # local scheduler (backup for non-GitHub runs)

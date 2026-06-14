@@ -15,7 +15,7 @@ Full pipeline:
   5. ONLY alert Sandeep when CONFIRM detected (hot lead ready to hire)
 """
 
-import sys, imaplib, email, smtplib, ssl, csv, os, json, re, time
+import sys, imaplib, email, smtplib, ssl, csv, os, re, time
 from email.header import decode_header
 from datetime import datetime
 from email.mime.text import MIMEText
@@ -23,66 +23,29 @@ from email.mime.multipart import MIMEMultipart
 
 if hasattr(sys.stdout, "reconfigure"): sys.stdout.reconfigure(encoding="utf-8")
 
+import tracker   # shared state manager — no circular imports
+import telegram_notifier
+import voice_caller
 from config import (
     GMAIL_ADDRESS, GMAIL_APP_PASSWORD,
     YOUR_NAME, YOUR_PHONE, YOUR_PORTFOLIO, YOUR_EMAIL,
     GROQ_API_KEY, GROQ_MODEL,
 )
 
-REPLIED_LOG  = "replied_log.csv"
-CONV_FILE    = "conversations.json"
-SENT_LOG     = "sent_log.csv"
+REPLIED_LOG   = "replied_log.csv"
+SENT_LOG      = "sent_log.csv"
 MAX_EXCHANGES = 4   # max auto-replies per lead before handing off to Sandeep
 
-
-# ── Conversation state tracker ─────────────────────────────────
-
-def _load_conversations() -> dict:
-    if not os.path.exists(CONV_FILE):
-        return {}
-    try:
-        with open(CONV_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception:
-        return {}
-
-
-def _save_conversations(data: dict):
-    with open(CONV_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
-
-
-def register_outreach(lead: dict, email_addr: str):
-    """Called by outreach_sender when a cold email is sent."""
-    convs = _load_conversations()
-    key   = email_addr.lower().strip()
-    if key not in convs:
-        convs[key] = {
-            "business_name": lead.get("name", ""),
-            "category":      lead.get("category", ""),
-            "city":          lead.get("city", ""),
-            "website":       lead.get("website", ""),
-            "phone":         lead.get("phone", ""),
-            "stage":         "COLD_SENT",
-            "exchanges":     0,
-            "qualified":     False,
-            "last_contact":  datetime.now().strftime("%Y-%m-%d"),
-        }
-        _save_conversations(convs)
-
-
 def _get_lead_context(sender_email: str) -> dict:
-    """Look up lead details from conversations.json or sent_log.csv."""
-    convs = _load_conversations()
-    key   = sender_email.lower().strip()
-    if key in convs:
-        return convs[key]
-
-    # Fallback: check sent_log.csv
+    """Look up lead details from tracker (conversations.json) or sent_log.csv fallback."""
+    data = tracker.get(sender_email)
+    if data:
+        return data
+    # Fallback: check sent_log.csv for leads registered before tracker existed
     if os.path.exists(SENT_LOG):
         with open(SENT_LOG, "r", encoding="utf-8") as f:
             for row in csv.DictReader(f):
-                if row.get("email","").lower() == key:
+                if row.get("email","").lower() == sender_email.lower().strip():
                     return {
                         "business_name": row.get("business_name",""),
                         "category":      row.get("category",""),
@@ -394,6 +357,12 @@ def _alert_hot_lead(sender_email: str, sender_name: str, subject: str, body: str
             s.login(GMAIL_ADDRESS, GMAIL_APP_PASSWORD)
             s.send_message(msg)
         print(f"  🚨 HOT LEAD ALERT sent to {YOUR_EMAIL} for {biz or sender_name}!")
+        
+        # Trigger Telegram and Twilio Alerts
+        issues = lead_ctx.get("issues", "")
+        telegram_notifier.alert_hot_lead(biz or sender_name, city, phone, sender_email, web, issues)
+        voice_caller.call_sandeep(biz or sender_name, city, phone)
+        
     except Exception as e:
         print(f"  [Alert] Error: {e}")
 
@@ -423,7 +392,6 @@ def check_replies():
         return
 
     already_seen = _load_replied()
-    convs        = _load_conversations()
     new_replies  = 0
     auto_sent    = 0
     hot_leads    = 0
@@ -476,32 +444,22 @@ def check_replies():
             # ── Handle each intent ──
             if intent == "NOT_INTERESTED":
                 print(f"     → Opted out — marked and skipped")
-                # Update stage
-                if sender_email in convs:
-                    convs[sender_email]["stage"] = "OPTED_OUT"
-                else:
-                    convs[sender_email] = {"stage": "OPTED_OUT", "business_name": biz_name}
+                tracker.update(sender_email, stage="OPTED_OUT", business_name=biz_name)
                 _log_replied(message_id, sender_email, subject, intent)
-                _save_conversations(convs)
                 continue
 
             elif intent == "CONFIRM":
                 # 🚨 HOT LEAD — alert Sandeep immediately
                 _alert_hot_lead(sender_email, sender_name or biz_name, subject, body, lead_ctx)
                 _confirm_reply_to_lead(sender_email, lead_ctx, message_id)
-                if sender_email in convs:
-                    convs[sender_email]["stage"]     = "QUALIFIED"
-                    convs[sender_email]["qualified"] = True
-                else:
-                    convs[sender_email] = {"stage": "QUALIFIED", "qualified": True, "business_name": biz_name}
+                tracker.update(sender_email, stage="QUALIFIED", qualified=True, business_name=biz_name)
                 hot_leads += 1
 
             elif exchanges >= MAX_EXCHANGES:
                 # Had enough back-and-forth — hand off to Sandeep
                 _alert_hot_lead(sender_email, sender_name or biz_name, subject, body, lead_ctx)
                 print(f"     → {MAX_EXCHANGES} exchanges done — alerted you to take over")
-                if sender_email in convs:
-                    convs[sender_email]["stage"] = "HANDOFF"
+                tracker.update(sender_email, stage="HANDOFF")
                 hot_leads += 1
 
             else:
@@ -514,15 +472,13 @@ def check_replies():
                 if _send_email(sender_email, reply_subject, reply_body, message_id):
                     auto_sent += 1
                     print(f"     ✅ Auto-replied ({intent})")
-                    # Update conversation state
-                    if sender_email not in convs:
-                        convs[sender_email] = {
-                            "business_name": biz_name,
-                            "stage": "COLD_SENT", "exchanges": 0
-                        }
-                    convs[sender_email]["stage"]        = "REPLIED"
-                    convs[sender_email]["exchanges"]    = exchanges + 1
-                    convs[sender_email]["last_contact"] = datetime.now().strftime("%Y-%m-%d")
+                    tracker.update(
+                        sender_email,
+                        stage="REPLIED",
+                        exchanges=exchanges + 1,
+                        last_contact=datetime.now().strftime("%Y-%m-%d"),
+                        business_name=biz_name,
+                    )
                 else:
                     print(f"     ❌ Auto-reply failed")
 
@@ -530,8 +486,6 @@ def check_replies():
 
             new_replies += 1
             _log_replied(message_id, sender_email, subject, intent)
-
-        _save_conversations(convs)
         mail.logout()
 
         print(f"\n  [Reply Checker] Done:")

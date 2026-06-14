@@ -1,0 +1,77 @@
+[2026-06-13 21:17:32] [Scheduler] Started — will run daily at 09:00
+[2026-06-13 21:17:32] [Scheduler] Keep this window open. Press Ctrl+C to stop.
+[2026-06-13 21:17:32] [Scheduler] Running first cycle now ...
+[2026-06-13 21:17:32] =======================================================
+[2026-06-13 21:17:32]   AGENCY BOT STARTED  |  City: Hyderabad
+[2026-06-13 21:17:32] =======================================================
+[2026-06-13 21:17:32] 
+[Phase 1] Scraping: RESTAURANT
+[2026-06-13 21:17:33]   Scraping: restaurant in Hyderabad
+[2026-06-13 21:18:16]     5 listings found
+[2026-06-13 21:18:21]     ✓ Mandi King Elite Arabian Restaurant | NO SITE
+[2026-06-13 21:18:28]     ✓ Pakka Local Hitech City | pakkalocalrestaurants.com
+[2026-06-13 21:18:35]     ✓ Native Bar & Kitchen | Best Restaurant In Hyderabad | nativekitchen.in
+[2026-06-13 21:18:40]     ✓ Exotica Banjara Hills | exoticahyderabad.com
+[2026-06-13 21:18:45]     ✓ Taaza Kitchen | NO SITE
+[2026-06-13 21:18:46] [Phase 2] Auditing 5 sites ...
+[2026-06-13 21:18:46]   Auditing: Mandi King Elite Arabian Restaurant
+[2026-06-13 21:18:52]   Auditing: Pakka Local Hitech City
+[2026-06-13 21:18:58]   Auditing: Native Bar & Kitchen | Best Restaurant In Hyderabad
+[2026-06-13 21:19:00]   Auditing: Exotica Banjara Hills
+[2026-06-13 21:19:02]   Auditing: Taaza Kitchen
+[2026-06-13 21:19:04] 
+[Phase 1] Scraping: DENTAL CLINIC
+[2026-06-13 21:19:04]   Scraping: dental clinic in Hyderabad
+[2026-06-13 21:19:20]     5 listings found
+[2026-06-13 21:19:24]     ✓ Galaxy Dental Care | Best Dental Clinic in Chandanagar | galaxydentalcare.in
+[2026-06-13 21:19:30]     ✓ Park Dental Care Kondapur, HITEC City | Best Dental clinic in Kondapur, Hitech City | parkdentalcare.in
+[2026-06-13 21:19:35]     ✓ Smile Brite Dental Clinic - Serilingampalli | NO SITE
+[2026-06-13 21:19:40]     ✓ ANU'S DENTAL | Best Dental Clinic in Hyderabad | anusdentalchandanagar.com
+[2026-06-13 21:19:44]     ✓ Galaxy Dental Care | Best Dental Clinic in Chandanagar | galaxydentalcare.in
+[2026-06-13 21:19:46] [Phase 2] Auditing 5 sites ...
+[2026-06-13 21:19:46]   Auditing: Galaxy Dental Care | Best Dental Clinic in Chandanagar
+[2026-06-13 21:19:47]   Auditing: Park Dental Care Kondapur, HITEC City | Best Dental clinic in Kondapur, Hitech City
+[2026-06-13 21:19:49]   Auditing: Smile Brite Dental Clinic - Serilingampalli
+[2026-06-13 21:19:51]   Auditing: ANU'S DENTAL | Best Dental Clinic in Hyderabad
+[2026-06-13 21:20:01]   Auditing: Galaxy Dental Care | Best Dental Clinic in Chandanagar
+[2026-06-13 21:20:03] 
+[Phase 1] Scraping: BOUTIQUE
+[2026-06-13 21:20:03]   Scraping: boutique in Hyderabad
+[2026-06-13 21:20:16]     5 listings found
+[2026-06-13 21:20:19]     ✓ Harini Designer Boutique | NO SITE
+[2026-06-13 21:20:26]     ✓ AADYA BOUTIQUE, THE FEMI WORLD | g.page
+[2026-06-13 21:20:32]     ✓ Akshara Reddy Boutique | NO SITE
+[2026-06-13 21:20:37]     ✓ Sri Neeru's Vastram - boutique | NO SITE
+[2026-06-13 21:20:41]     ✓ Hitha's Boutique | NO SITE
+[2026-06-13 21:20:43] [Phase 2] Auditing 5 sites ...
+[2026-06-13 21:20:43]   Auditing: Harini Designer Boutique
+[2026-06-13 21:20:44]   Auditing: AADYA BOUTIQUE, THE FEMI WORLD
+[2026-06-13 21:20:48]   Auditing: Akshara Reddy Boutique
+[2026-06-13 21:20:50]   Auditing: Sri Neeru's Vastram - boutique
+[2026-06-13 21:20:52]   Auditing: Hitha's Boutique
+[2026-06-13 21:20:53] 
+[Phase 1] Scraping: GYM
+[2026-06-13 21:20:53]   Scraping: gym in Hyderabad
+[2026-06-13 21:21:09]     5 listings found
+[2026-06-13 21:21:13]     ✓ Transform Together Gym & Fitness Studio | NO SITE
+[2026-06-13 21:21:18]     ✓ IDEAL FITNESS GYM | NO SITE
+[2026-06-13 21:21:24]     ✓ D - Cross 4 Fit Gym | NO SITE
+[2026-06-13 21:21:28]     ✓ Power Station Gym | Best Personal Training and Transformation In Hyderabad | instagram.com
+[2026-06-13 21:21:33]     ✓ Old school Gym | NO SITE
+[2026-06-13 21:21:34] [Phase 2] Auditing 5 sites ...
+[2026-06-13 21:21:34]   Auditing: Transform Together Gym & Fitness Studio
+[2026-06-13 21:21:36]   Auditing: IDEAL FITNESS GYM
+[2026-06-13 21:21:38]   Auditing: D - Cross 4 Fit Gym
+[2026-06-13 21:21:39]   Auditing: Power Station Gym | Best Personal Training and Transformation In Hyderabad
+[2026-06-13 21:21:42]   Auditing: Old school Gym
+[2026-06-13 21:21:44] 
+[Phase 1] Scraping: SCHOOL
+[2026-06-13 21:21:44]   Scraping: school in Hyderabad
+[2026-06-13 21:21:59]     5 listings found
+[2026-06-13 21:22:02]     ✓ Sancta Maria International School | sanctamaria.in
+[2026-06-13 21:22:07]     ✓ Meru International School Miyapur, Hyderabad | meruinternationalschool.com
+[2026-06-13 21:22:13]     ✓ Ankur's tree house school | NO SITE
+[2026-06-13 21:22:18]     ✓ Vignan Global Gen School – CBSE School in Madinaguda | vignanschools.org
+[2026-06-13 21:22:22]     ✓ International School of Hyderabad | ishyd.org
+[2026-06-13 21:22:23] [Phase 2] Auditing 5 sites ...
+[2026-06-13 21:22:23]   Auditing: Sancta Maria International School
