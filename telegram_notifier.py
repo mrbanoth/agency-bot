@@ -224,3 +224,39 @@ def handle_commands():
 
     except Exception as e:
         print(f"  [Telegram Commands] Error processing commands: {e}")
+
+def send_no_website_leads(leads):
+    """Filter leads with no website but a phone number and send to Sandeep on Telegram."""
+    no_site_leads = [l for l in leads if not l.get("website", "").strip() and l.get("phone", "").strip()]
+    if not no_site_leads:
+        return True
+
+    text = "🔌 <b>CLIENT OPPORTUNITIES (NO WEBSITE)</b> 🔌\n\n"
+    text += "The following businesses have no website at all (high-intent web design prospects):\n\n"
+
+    for idx, lead in enumerate(no_site_leads[:10], 1):
+        name = lead.get("name", "Unknown")
+        phone = lead.get("phone", "—")
+        city = lead.get("city", "—")
+        category = lead.get("category", "—")
+        
+        # Normalize phone for WhatsApp link
+        digits = "".join(filter(str.isdigit, phone))
+        # Handle Indian numbers without country code
+        if digits and len(digits) == 10 and digits[0] in "6789":
+            digits = "91" + digits
+        
+        wa_link = f"https://wa.me/{digits}" if digits else ""
+        tel_link = f"tel:{phone}"
+        
+        text += (
+            f"<b>{idx}. {escape_html(name)}</b> ({escape_html(category)})\n"
+            f"📍 City: {escape_html(city)}\n"
+            f"📞 Phone: <code>{escape_html(phone)}</code>\n"
+            f"📱 WhatsApp: <a href='{wa_link}'>Message</a> | 📞 Call: <a href='{tel_link}'>Dial</a>\n\n"
+        )
+    
+    if len(no_site_leads) > 10:
+        text += f"<i>... and {len(no_site_leads) - 10} more found today. See leads.csv for full list.</i>"
+
+    return send_message(text)

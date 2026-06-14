@@ -276,14 +276,14 @@ def save_leads(leads):
             l["date_found"] = datetime.now().strftime("%Y-%m-%d")
             new.append(l)
 
-        if new:
-            exists = os.path.exists(OUTPUT_CSV)
-            with open(OUTPUT_CSV, "a", newline="", encoding="utf-8") as f:
-                w = csv.DictWriter(f, fieldnames=FIELDS, extrasaction="ignore")
-                if not exists: w.writeheader()
-                w.writerows(sorted(new, key=lambda x: x.get("website_score", 100)))
-            log(f"  Saved {len(new)} new leads → {OUTPUT_CSV}")
-        return new
+    if new:
+        exists = os.path.exists(OUTPUT_CSV)
+        with open(OUTPUT_CSV, "a", newline="", encoding="utf-8") as f:
+            w = csv.DictWriter(f, fieldnames=FIELDS, extrasaction="ignore")
+            if not exists: w.writeheader()
+            w.writerows(sorted(new, key=lambda x: x.get("website_score", 100)))
+        log(f"  Saved {len(new)} new leads → {OUTPUT_CSV}")
+    return new
 
 
 def run_call_outreach() -> int:
@@ -421,6 +421,10 @@ def run():
         telegram_notifier.send_daily_digest(
             today_city, len(high), len(medium), len(new_leads), calls_made
         )
+
+        # ── Send Leads with No Website ──
+        log("\n[Phase 7] Sending no-website leads to Telegram ...")
+        telegram_notifier.send_no_website_leads(all_leads)
 
         log(f"\n  ✅ DONE — check sandeepnaikb0@gmail.com and Telegram")
         log("=" * 60)
