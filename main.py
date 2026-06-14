@@ -342,6 +342,10 @@ def run():
     log("=" * 60)
 
     try:
+        # ── Check for incoming Telegram commands ──
+        log("\n[Phase 0] Checking for incoming Telegram commands ...")
+        telegram_notifier.handle_commands()
+
         all_leads = []
         raw_leads_map = {}
 
