@@ -115,43 +115,7 @@ def handle_commands():
                 )
                 send_message(reply)
 
-            elif cmd == "/status":
-                qualified = 0
-                qualified_leads = []
 
-                if os.path.exists("conversations.json"):
-                    try:
-                        with open("conversations.json", "r", encoding="utf-8") as f:
-                            convs = json.load(f)
-                            for email, c in convs.items():
-                                if c.get("stage") == "QUALIFIED":
-                                    qualified += 1
-                                    biz = c.get("business_name") or "Unknown Business"
-                                    city = c.get("city") or "Hyderabad"
-                                    phone = c.get("phone") or "—"
-                                    qualified_leads.append(
-                                        f"<b>• {escape_html(biz)}</b> ({escape_html(city)})\n"
-                                        f"  📧 Email: <code>{escape_html(email)}</code>\n"
-                                        f"  📞 Phone: <code>{escape_html(phone)}</code>"
-                                    )
-                    except Exception:
-                        pass
-
-                price_per_site = 8000
-                potential_earnings = qualified * price_per_site
-
-                reply = (
-                    "🏆 <b>Sandeep's Agency Report</b> 🏆\n\n"
-                    f"💰 <b>Potential Earnings:</b> ₹{potential_earnings:,} INR\n"
-                    f"👥 <b>Confirmed Clients (Total: {qualified}):</b>\n\n"
-                )
-
-                if qualified_leads:
-                    reply += "\n\n".join(qualified_leads)
-                else:
-                    reply += "<i>No clients confirmed yet. The bot is actively searching and emailing businesses daily!</i>"
-
-                send_message(reply)
 
             elif cmd == "/projects":
                 qualified_leads = []
@@ -246,31 +210,7 @@ def handle_commands():
                         )
                 send_message(reply)
 
-            elif cmd == "/replies":
-                replies_list = []
-                if os.path.exists("replied_log.csv"):
-                    try:
-                        with open("replied_log.csv", "r", encoding="utf-8") as f:
-                            rdr = csv.DictReader(f)
-                            for row in rdr:
-                                replies_list.append(row)
-                    except Exception:
-                        pass
 
-                recent_replies = replies_list[-5:] if len(replies_list) > 5 else replies_list
-                recent_replies.reverse()
-
-                if not recent_replies:
-                    reply = "ℹ️ No client replies logged yet."
-                else:
-                    reply = "📨 <b>Recent Client Replies:</b>\n\n"
-                    for idx, rep in enumerate(recent_replies, 1):
-                        date = rep.get("date", "")
-                        sender = rep.get("sender", "")
-                        intent = rep.get("intent", "")
-                        reply += f"{idx}. <b>{escape_html(sender)}</b>\n📅 {date} | Intent: <code>{intent}</code>\n\n"
-
-                send_message(reply)
 
         if new_last_id > last_id:
             with open(state_file, "w") as f:
