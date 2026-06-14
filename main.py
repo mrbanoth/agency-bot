@@ -418,10 +418,11 @@ def run():
         send_lead_digest(new_leads or hot[:20])
 
         # ── Telegram Summary Digest ──
-        log("\n[Phase 6] Sending daily digest to Telegram ...")
-        telegram_notifier.send_daily_digest(
-            today_city, len(high), len(medium), len(new_leads), calls_made
-        )
+        # Commented out by user request to keep Telegram chat clutter-free
+        # log("\n[Phase 6] Sending daily digest to Telegram ...")
+        # telegram_notifier.send_daily_digest(
+        #     today_city, len(high), len(medium), len(new_leads), calls_made
+        # )
 
         # ── Send Leads with No Website ──
         log("\n[Phase 7] Sending no-website leads to Telegram ...")

@@ -108,11 +108,9 @@ def handle_commands():
             if cmd == "/help":
                 reply = (
                     "🤖 <b>Agency Bot Commands:</b>\n\n"
-                    "<b>/status</b> — Get overall bot stats\n"
-                    "<b>/leads</b> — List top 5 recent hot leads\n"
                     "<b>/projects</b> — View confirmed freelance projects\n"
                     "<b>/earnings</b> — Calculate potential earnings\n"
-                    "<b>/replies</b> — Show recent client email replies\n"
+                    "<b>/clients</b> — List recent hot leads to contact\n"
                     "<b>/help</b> — Show this help message"
                 )
                 send_message(reply)
@@ -206,7 +204,7 @@ def handle_commands():
                 )
                 send_message(reply)
 
-            elif cmd == "/leads":
+            elif cmd == "/clients" or cmd == "/leads":
                 leads_list = []
                 if os.path.exists("leads.csv"):
                     try:
@@ -225,14 +223,27 @@ def handle_commands():
                 if not recent_leads:
                     reply = "ℹ️ No hot leads found in leads.csv yet."
                 else:
-                    reply = "🔥 <b>Recent Hot Leads:</b>\n\n"
+                    reply = "🔥 <b>Recent Clients to Pitch:</b>\n\n"
                     for idx, lead in enumerate(recent_leads, 1):
                         name = lead.get("name", "Unknown")
-                        score = lead.get("website_score", "0")
                         pri = "🔥" if lead.get("priority") == "HIGH" else "⚡"
-                        site = lead.get("website", "No site")
-                        reply += f"{idx}. {pri} <b>{escape_html(name)}</b> (Score: {score})\n🌐 {escape_html(site)}\n\n"
+                        site = lead.get("website") or "No website"
+                        phone = lead.get("phone") or "—"
+                        city = lead.get("city") or "—"
 
+                        # Normalize phone for WhatsApp link
+                        digits = "".join(filter(str.isdigit, phone))
+                        if digits and len(digits) == 10 and digits[0] in "6789":
+                            digits = "91" + digits
+                        wa_link = f"https://wa.me/{digits}" if digits else ""
+                        tel_link = f"tel:{phone}"
+
+                        reply += (
+                            f"<b>{idx}. {pri} {escape_html(name)}</b> ({escape_html(city)})\n"
+                            f"🌐 Website: {escape_html(site)}\n"
+                            f"📞 Phone: <code>{escape_html(phone)}</code>\n"
+                            f"📱 WhatsApp: <a href='{wa_link}'>Message</a> | 📞 Call: <a href='{tel_link}'>Dial</a>\n\n"
+                        )
                 send_message(reply)
 
             elif cmd == "/replies":
