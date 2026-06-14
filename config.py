@@ -38,12 +38,16 @@ GROQ_MODEL   = "llama-3.3-70b-versatile"
 # Day 1 = Hyderabad, Day 2 = Bangalore, etc. Cycles forever.
 CITIES = [
     # Tier 1 — highest competition but most leads
-    "Hyderabad", "Bangalore", "Mumbai", "Chennai", "Delhi",
-    # Tier 2 — good volume
-    "Pune", "Kolkata", "Ahmedabad", "Jaipur", "Surat",
-    "Lucknow", "Kanpur", "Nagpur", "Visakhapatnam", "Bhopal",
+    "Hyderabad", "Bangalore", "Mumbai", "Chennai", "Delhi", "Gurgaon", "Noida",
+    # Tier 2 — good volume & business activity
+    "Pune", "Kolkata", "Ahmedabad", "Jaipur", "Surat", "Lucknow", "Kanpur", 
+    "Nagpur", "Visakhapatnam", "Bhopal", "Patna", "Ludhiana", "Agra", "Nashik",
     # Tier 3 — smaller cities, less competition, easier to close
-    "Coimbatore", "Kochi", "Indore", "Vadodara", "Patna",
+    "Coimbatore", "Kochi", "Indore", "Vadodara", "Rajkot", "Varanasi", "Dehradun",
+    "Chandigarh", "Amritsar", "Vijayawada", "Guntur", "Warangal", "Mysore", 
+    "Mangalore", "Hubli", "Salem", "Madurai", "Tiruchirappalli", "Kozhikode", 
+    "Thiruvananthapuram", "Bhubaneswar", "Ranchi", "Raipur", "Jabalpur", 
+    "Gwalior", "Guwahati", "Navi Mumbai", "Thane", "Ghaziabad", "Jamshedpur"
 ]
 
 BUSINESS_TYPES = [
