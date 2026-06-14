@@ -1,0 +1,34 @@
+{
+  "mail@statusclub.co.in": {
+    "business_name": "Dhuaan - Sheesha & Kitchen",
+    "category": "local restaurant",
+    "city": "Kanpur",
+    "website": "statusclub.co.in",
+    "phone": "073795 01000",
+    "priority": "HIGH",
+    "issues": "Not mobile-friendly | No meta description | No modern framework detected | No phone number on site | No Call-To-Action button",
+    "stage": "COLD_SENT",
+    "exchanges": 0,
+    "qualified": false,
+    "follow_up_sent": false,
+    "call_attempted": false,
+    "cold_sent_date": "2026-06-15",
+    "last_contact": "2026-06-15"
+  },
+  "office@calgc.in": {
+    "business_name": "LAKHOTIA GUPTA & COMPANY- BEST CA FIRM FOR ARTICLESHIP IN KANPUR, BEST CA FIRM IN KANPUR, BEST CA FIRM IN UP",
+    "category": "chartered accountant",
+    "city": "Kanpur",
+    "website": "calgc.in",
+    "phone": "095549 50715",
+    "priority": "HIGH",
+    "issues": "Not mobile-friendly | No meta description | No modern framework detected | No phone number on site | No Call-To-Action button",
+    "stage": "COLD_SENT",
+    "exchanges": 0,
+    "qualified": false,
+    "follow_up_sent": false,
+    "call_attempted": false,
+    "cold_sent_date": "2026-06-15",
+    "last_contact": "2026-06-15"
+  }
+}

@@ -118,80 +118,40 @@ def handle_commands():
                 send_message(reply)
 
             elif cmd == "/status":
-                # Count total leads
-                total_leads = 0
-                high_leads = 0
-                medium_leads = 0
-                if os.path.exists("leads.csv"):
-                    try:
-                        with open("leads.csv", "r", encoding="utf-8") as f:
-                            rdr = csv.DictReader(f)
-                            for row in rdr:
-                                total_leads += 1
-                                p = row.get("priority", "").upper()
-                                if p == "HIGH":
-                                    high_leads += 1
-                                elif p == "MEDIUM":
-                                    medium_leads += 1
-                    except Exception:
-                        pass
-
-                # Count from conversations.json (tracker)
-                total_convs = 0
-                cold_sent = 0
-                follow_up_sent = 0
-                second_follow_up_sent = 0
-                replied = 0
-                handoff = 0
                 qualified = 0
-                opted_out = 0
                 qualified_leads = []
 
                 if os.path.exists("conversations.json"):
                     try:
                         with open("conversations.json", "r", encoding="utf-8") as f:
                             convs = json.load(f)
-                            total_convs = len(convs)
                             for email, c in convs.items():
-                                st = c.get("stage", "")
-                                if st == "COLD_SENT":
-                                    cold_sent += 1
-                                elif st == "FOLLOW_UP_SENT":
-                                    follow_up_sent += 1
-                                elif st == "SECOND_FOLLOWUP_SENT":
-                                    second_follow_up_sent += 1
-                                elif st == "REPLIED":
-                                    replied += 1
-                                elif st == "HANDOFF":
-                                    handoff += 1
-                                elif st == "QUALIFIED":
+                                if c.get("stage") == "QUALIFIED":
                                     qualified += 1
                                     biz = c.get("business_name") or "Unknown Business"
                                     city = c.get("city") or "Hyderabad"
-                                    qualified_leads.append(f"• <b>{escape_html(biz)}</b> ({escape_html(city)}) — <code>{escape_html(email)}</code>")
-                                elif st == "OPTED_OUT":
-                                    opted_out += 1
+                                    phone = c.get("phone") or "—"
+                                    qualified_leads.append(
+                                        f"<b>• {escape_html(biz)}</b> ({escape_html(city)})\n"
+                                        f"  📧 Email: <code>{escape_html(email)}</code>\n"
+                                        f"  📞 Phone: <code>{escape_html(phone)}</code>"
+                                    )
                     except Exception:
                         pass
 
+                price_per_site = 8000
+                potential_earnings = qualified * price_per_site
+
                 reply = (
-                    "📊 <b>Bot Pipeline Report</b>\n\n"
-                    f"<b>Total Leads Scraped:</b> {total_leads} (🔥 High: {high_leads} | ⚡ Med: {medium_leads})\n\n"
-                    f"<b>✉️ Email Outreach Pipeline:</b>\n"
-                    f"└─ 📧 Cold Emails Sent: <b>{cold_sent}</b>\n"
-                    f"└─ 🔄 First Follow-ups: <b>{follow_up_sent}</b>\n"
-                    f"└─ 🔁 Second Follow-ups: <b>{second_follow_up_sent}</b>\n\n"
-                    f"<b>💬 Conversations:</b>\n"
-                    f"└─ 💬 Active Client Replies: <b>{replied}</b>\n"
-                    f"└─ ⚠️ Handoffs to Sandeep: <b>{handoff}</b>\n"
-                    f"└─ ⊘ Opted Out: <b>{opted_out}</b>\n\n"
-                    f"🏆 <b>Confirmed Projects (Hire Requests): {qualified}</b>\n"
+                    "🏆 <b>Sandeep's Agency Report</b> 🏆\n\n"
+                    f"💰 <b>Potential Earnings:</b> ₹{potential_earnings:,} INR\n"
+                    f"👥 <b>Confirmed Clients (Total: {qualified}):</b>\n\n"
                 )
 
                 if qualified_leads:
-                    reply += "\n" + "\n".join(qualified_leads)
+                    reply += "\n\n".join(qualified_leads)
                 else:
-                    reply += "<i>No projects confirmed yet. Keep checking!</i>"
+                    reply += "<i>No clients confirmed yet. The bot is actively searching and emailing businesses daily!</i>"
 
                 send_message(reply)
 

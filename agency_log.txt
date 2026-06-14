@@ -75,3 +75,160 @@
 [2026-06-13 21:22:22]     ✓ International School of Hyderabad | ishyd.org
 [2026-06-13 21:22:23] [Phase 2] Auditing 5 sites ...
 [2026-06-13 21:22:23]   Auditing: Sancta Maria International School
+[2026-06-15 00:01:59] [Scheduler] Started — will run daily at 09:00
+[2026-06-15 00:01:59] [Scheduler] Keep this window open. Press Ctrl+C to stop.
+[2026-06-15 00:01:59] [Scheduler] Started instant Telegram command polling (every 3s)...
+[2026-06-15 00:01:59] [Scheduler] Running first cycle now ...
+[2026-06-15 00:01:59] ============================================================
+[2026-06-15 00:01:59]   AGENCY BOT  |  Kanpur  |  15 Jun 2026
+[2026-06-15 00:01:59]   Rotation: city 14/51
+[2026-06-15 00:01:59] ============================================================
+[2026-06-15 00:01:59] 
+[Phase 0] Checking for incoming Telegram commands ...
+[2026-06-15 00:02:06] 
+[Phase 1] Scraping Google Maps in parallel (3 categories at a time)...
+[2026-06-15 00:02:07]   Scraping: dental clinic in Kanpur
+[2026-06-15 00:02:07]   Scraping: boutique in Kanpur
+[2026-06-15 00:02:07]   Scraping: local restaurant in Kanpur
+[2026-06-15 00:02:32]     ✓ ✅𝗗𝗿. 𝗩𝗶𝗷 𝗗𝗲𝗻𝘁𝗮𝗹 𝗰𝗹𝗶𝗻𝗶𝗰 𝗮𝗻𝗱 𝗶𝗺𝗽𝗹𝗮𝗻𝘁 𝗰𝗲𝗻𝘁𝗲𝗿 | drvijdentalclinic.com
+[2026-06-15 00:02:33]     ✓ Good Food Restaurant | NO SITE
+[2026-06-15 00:02:34]     ✓ Kanchans Fashion-Boutique In Kanpur,Ethnic Wear,Western Wear,Designer Wear,Indian Wear,Gowns,Crop Tops,Lehenga In Kanpur | NO SITE
+[2026-06-15 00:02:36]     ✓ Kanpur Dental World and Implant Centre | kanpurdental.com
+[2026-06-15 00:02:37]     ✓ Dhuaan - Sheesha & Kitchen | statusclub.co.in
+[2026-06-15 00:02:37]     ✓ PRIYANKA BOUTIQUE | NO SITE
+[2026-06-15 00:02:39]     ✓ Smile Ray Super Specialty dental clinic in Kanpur | Dentist in Kanpur | RCT & Dental Implants , Top Dentist in Kanpur | dentistinkanpur.com
+[2026-06-15 00:02:40]     ⊘ Amore Boutique — big brand, skipping
+[2026-06-15 00:02:40]   Scraping: coaching classes in Kanpur
+[2026-06-15 00:02:40]   [Scrape Done] boutique in Kanpur: 2 leads found
+[2026-06-15 00:02:40]     ✓ Anaicha's Food Joint | NO SITE
+[2026-06-15 00:02:40]   Scraping: chartered accountant in Kanpur
+[2026-06-15 00:02:40]   [Scrape Done] dental clinic in Kanpur: 3 leads found
+[2026-06-15 00:02:40]   Scraping: interior designer in Kanpur
+[2026-06-15 00:02:40]   [Scrape Done] local restaurant in Kanpur: 3 leads found
+[2026-06-15 00:02:50]     ✓ Shiksha Academy Kanpur | shikshaacademykanpur.in
+[2026-06-15 00:02:50]     ✓ Finosper.in by CA Shrish Tiwari | Best CA in Kanpur for Startups | Best GST Consultant in Kanpur | finosper.in
+[2026-06-15 00:02:51]     ✓ Design by Lavassa | NO SITE
+[2026-06-15 00:02:52]     ✓ CA Shivam Singh-Taxoexpert- Best Ca In Kanpur | Best GST Consultant In Kanpur | taxoexpert.com
+[2026-06-15 00:02:53]     ✓ Brilliant Tutorials Institute - best iitjee & neet coaching in kanpur | Neet Coaching in kanpur,Uttar Pradesh | brilliant.ac.in
+[2026-06-15 00:02:54]     ✓ Decor Designs - Best Interior Designer in Kanpur | decordesigns.co.in
+[2026-06-15 00:02:55]     ✓ LAKHOTIA GUPTA & COMPANY- BEST CA FIRM FOR ARTICLESHIP IN KANPUR, BEST CA FIRM IN KANPUR, BEST CA FIRM IN UP | calgc.in
+[2026-06-15 00:02:56]     ✓ Career Infinity Classes | careerinfinityclasses.com
+[2026-06-15 00:02:56]   [Scrape Done] chartered accountant in Kanpur: 3 leads found
+[2026-06-15 00:02:56]   Scraping: travel agency in Kanpur
+[2026-06-15 00:02:56]   [Scrape Done] coaching classes in Kanpur: 3 leads found
+[2026-06-15 00:02:56]   Scraping: event management in Kanpur
+[2026-06-15 00:02:56]     ⊘ Casario Interior – Modern & Luxury Interior Design Studio, Kanpur — big brand, skipping
+[2026-06-15 00:02:56]   Scraping: bakery in Kanpur
+[2026-06-15 00:02:56]   [Scrape Done] interior designer in Kanpur: 2 leads found
+[2026-06-15 00:03:06]     ✓ Hello Kanpur Tour & Travels | hellokanpurtravels.in
+[2026-06-15 00:03:06]     ✓ Dream Design Events | NO SITE
+[2026-06-15 00:03:06]     ✓ Model Bakery-Best Bakery Shop in Kanpur | Best Cake Shop in Kanpur | Best Fast Food shop in Kanpur | NO SITE
+[2026-06-15 00:03:09]     ✓ Esha Travels - Travel Agency in Kanpur | eshatravels.in
+[2026-06-15 00:03:09]     ✓ A R Events-The party planne | NO SITE
+[2026-06-15 00:03:10]     ✓ Mr. Brown Bakery | mrbrownbakery.com
+[2026-06-15 00:03:12]     ✓ Kanpur Tour & Travels | kanpurtourandtravels.in
+[2026-06-15 00:03:12]     ✓ Anchor/EMCEE Shweta Jaiswal(Kanpur) | anchorshwetajaiswal.blogspot.com
+[2026-06-15 00:03:12]   Scraping: NGO in Kanpur
+[2026-06-15 00:03:12]   [Scrape Done] travel agency in Kanpur: 3 leads found
+[2026-06-15 00:03:13]   Scraping: local gym in Kanpur
+[2026-06-15 00:03:13]   [Scrape Done] event management in Kanpur: 3 leads found
+[2026-06-15 00:03:13]     ✓ Silver Spoons | NO SITE
+[2026-06-15 00:03:14]   [Scrape Done] bakery in Kanpur: 3 leads found
+[2026-06-15 00:03:14]   Scraping: real estate agent in Kanpur
+[2026-06-15 00:03:22]     ✓ Rahil Foundation (NGO) | Best Foundation in Kanpur | Best NGO in Kanpur | | NO SITE
+[2026-06-15 00:03:23]     ⊘ Anytime Fitness, Swaroop Nagar — big brand, skipping
+[2026-06-15 00:03:24]     ⊘ Dream Properties — big brand, skipping
+[2026-06-15 00:03:25]     ✓ Kanpur youth foundation{ NGO} | NO SITE
+[2026-06-15 00:03:25]     ✓ SKY fitness gym kanpur | NO SITE
+[2026-06-15 00:03:26]     ✓ MANGAL MURATI PROPERTIES & BUILDERS | NO SITE
+[2026-06-15 00:03:28]     ✓ Udaan Sewa Sansthan - NGO in Kanpur Uttar Pradesh | Women empowerment | children | udaansewasansthan.com
+[2026-06-15 00:03:28]     ✓ MHP STRONG GYM | mhpstronggym.business.site
+[2026-06-15 00:03:29]   Scraping: photography studio in Kanpur
+[2026-06-15 00:03:29]   [Scrape Done] local gym in Kanpur: 2 leads found
+[2026-06-15 00:03:29]   Scraping: beauty parlour in Kanpur
+[2026-06-15 00:03:29]   [Scrape Done] NGO in Kanpur: 3 leads found
+[2026-06-15 00:03:31]     ✓ Preet Property Dealer | NO SITE
+[2026-06-15 00:03:32]   Scraping: tuition centre in Kanpur
+[2026-06-15 00:03:32]   [Scrape Done] real estate agent in Kanpur: 2 leads found
+[2026-06-15 00:03:43]     ✓ P3 Salon Kanpur | Hair Salon | p3salonkanpur.com
+[2026-06-15 00:03:45]     ✓ Galaxy Digitel Studio | Best Wedding Photographer in Kanpur | Best Photographer in Kanpur | galaxydigitelstudio.com
+[2026-06-15 00:03:46]     ✓ TEZZAS TUTORIAL | tezzastutorial.com
+[2026-06-15 00:03:48]     ✓ Deepa's Kayakalp Salon and Academy | deepaskayakalp.com
+[2026-06-15 00:03:50]     ⊘ Swati Studio | Swati Wedding Photography | Best Wedding Photographers in Kanpur | Best Photographers Kanpur | — big brand, skipping
+[2026-06-15 00:03:51]     ✓ KANPUR TUTORIAL | kanpurtutorial.com
+[2026-06-15 00:03:53]     ✓ Kaya Beauty studio | NO SITE
+[2026-06-15 00:03:54]   [Scrape Done] beauty parlour in Kanpur: 3 leads found
+[2026-06-15 00:03:54]     ⊘ WEDZO WEDDING STUDIO { wedding photographer in Kanpur } { wedding studio in Kanpur } best wedding photographer Kanpur — big brand, skipping
+[2026-06-15 00:03:55]   [Scrape Done] photography studio in Kanpur: 1 leads found
+[2026-06-15 00:03:56]     ✓ Shining Stars Home Tuitions | NO SITE
+[2026-06-15 00:03:56]   [Scrape Done] tuition centre in Kanpur: 3 leads found
+[2026-06-15 00:03:56] 
+[Phase 2] Enriching 39 total leads in parallel...
+[2026-06-15 00:03:59]   – Smile Ray Super Specialty dental clinic in Kanpur | Dentist in Kanpur | RCT & Dental Implants , Top Dentist in Kanpur | score=85 | email=✗
+[2026-06-15 00:03:59]   🔥 PRIYANKA BOUTIQUE | score=0 | email=✗
+[2026-06-15 00:03:59]   🔥 Kanchans Fashion-Boutique In Kanpur,Ethnic Wear,Western Wear,Designer Wear,Indian Wear,Gowns,Crop Tops,Lehenga In Kanpur | score=0 | email=✗
+[2026-06-15 00:04:00]   – ✅𝗗𝗿. 𝗩𝗶𝗷 𝗗𝗲𝗻𝘁𝗮𝗹 𝗰𝗹𝗶𝗻𝗶𝗰 𝗮𝗻𝗱 𝗶𝗺𝗽𝗹𝗮𝗻𝘁 𝗰𝗲𝗻𝘁𝗲𝗿 | score=100 | email=✗
+[2026-06-15 00:04:00]   – Kanpur Dental World and Implant Centre | score=85 | email=✗
+[2026-06-15 00:04:00]   🔥 Good Food Restaurant | score=0 | email=✗
+[2026-06-15 00:04:01]   🔥 Anaicha's Food Joint | score=0 | email=✗
+[2026-06-15 00:04:02]   – Shiksha Academy Kanpur | score=85 | email=✗
+[2026-06-15 00:04:02]   – Finosper.in by CA Shrish Tiwari | Best CA in Kanpur for Startups | Best GST Consultant in Kanpur | score=100 | email=✗
+[2026-06-15 00:04:02]   – CA Shivam Singh-Taxoexpert- Best Ca In Kanpur | Best GST Consultant In Kanpur | score=85 | email=✗
+[2026-06-15 00:04:03]   – Brilliant Tutorials Institute - best iitjee & neet coaching in kanpur | Neet Coaching in kanpur,Uttar Pradesh | score=100 | email=✗
+[2026-06-15 00:04:04]   🔥 Design by Lavassa | score=0 | email=✗
+[2026-06-15 00:04:04]   🔥 Dhuaan - Sheesha & Kitchen | score=30 | email=✓
+[2026-06-15 00:04:05]   – Hello Kanpur Tour & Travels | score=85 | email=✗
+[2026-06-15 00:04:06]   – Career Infinity Classes | score=70 | email=✗
+[2026-06-15 00:04:07]   🔥 LAKHOTIA GUPTA & COMPANY- BEST CA FIRM FOR ARTICLESHIP IN KANPUR, BEST CA FIRM IN KANPUR, BEST CA FIRM IN UP | score=30 | email=✓
+[2026-06-15 00:04:07]   🔥 Dream Design Events | score=0 | email=✗
+[2026-06-15 00:04:08]   🔥 A R Events-The party planne | score=0 | email=✗
+[2026-06-15 00:04:09]   – Anchor/EMCEE Shweta Jaiswal(Kanpur) | score=100 | email=✗
+[2026-06-15 00:04:09]   🔥 Model Bakery-Best Bakery Shop in Kanpur | Best Cake Shop in Kanpur | Best Fast Food shop in Kanpur | score=0 | email=✗
+[2026-06-15 00:04:11]   🔥 Silver Spoons | score=0 | email=✗
+[2026-06-15 00:04:12]   🔥 SKY fitness gym kanpur | score=0 | email=✗
+[2026-06-15 00:04:13]   – Mr. Brown Bakery | score=85 | email=✗
+[2026-06-15 00:04:14]   🔥 Rahil Foundation (NGO) | Best Foundation in Kanpur | Best NGO in Kanpur | | score=0 | email=✗
+[2026-06-15 00:04:15]   🔥 Kanpur youth foundation{ NGO} | score=0 | email=✗
+[2026-06-15 00:04:22]   🔥 Decor Designs - Best Interior Designer in Kanpur | score=0 | email=✗
+[2026-06-15 00:04:23]   🔥 Kanpur Tour & Travels | score=0 | email=✗
+[2026-06-15 00:04:24]   🔥 MANGAL MURATI PROPERTIES & BUILDERS | score=0 | email=✗
+[2026-06-15 00:04:24]   🔥 Esha Travels - Travel Agency in Kanpur | score=0 | email=✗
+[2026-06-15 00:04:25]   🔥 Preet Property Dealer | score=0 | email=✗
+[2026-06-15 00:04:26]   🔥 Kaya Beauty studio | score=0 | email=✗
+[2026-06-15 00:04:27]   – Deepa's Kayakalp Salon and Academy | score=100 | email=✗
+[2026-06-15 00:04:30]   – TEZZAS TUTORIAL | score=100 | email=✗
+[2026-06-15 00:04:33]   ⚡ MHP STRONG GYM | score=50 | email=✗
+[2026-06-15 00:04:34]   🔥 Shining Stars Home Tuitions | score=0 | email=✗
+[2026-06-15 00:04:34]   ⚡ Udaan Sewa Sansthan - NGO in Kanpur Uttar Pradesh | Women empowerment | children | score=45 | email=✗
+[2026-06-15 00:04:47]   🔥 Galaxy Digitel Studio | Best Wedding Photographer in Kanpur | Best Photographer in Kanpur | score=30 | email=✗
+[2026-06-15 00:04:49]   ⚡ P3 Salon Kanpur | Hair Salon | score=50 | email=✗
+[2026-06-15 00:05:00]   ⚡ KANPUR TUTORIAL | score=55 | email=✗
+[2026-06-15 00:05:00] 
+============================================================
+[2026-06-15 00:05:00]   RESULTS FOR Kanpur
+[2026-06-15 00:05:00]   🔥 HIGH priority : 22
+[2026-06-15 00:05:00]   ⚡ MEDIUM priority: 4
+[2026-06-15 00:05:00]   📧 Have email    : 2
+[2026-06-15 00:05:00]   Total scraped   : 39
+[2026-06-15 00:05:00] ============================================================
+[2026-06-15 00:05:00]   Saved 26 new leads → leads.csv
+[2026-06-15 00:05:00]   New leads saved : 26
+[2026-06-15 00:05:00] 
+[Phase 3] Sending cold emails ...
+[2026-06-15 00:08:21] 
+[Phase 3b] Sending follow-up emails (5-day no-reply leads) ...
+[2026-06-15 00:08:21] 
+[Phase 3c] Sending second follow-up emails (10-day no-reply leads) ...
+[2026-06-15 00:08:21] 
+[Phase 3d] Making Twilio voice calls (14-day no-reply HOT leads) [DISABLED]
+[2026-06-15 00:08:21] 
+[Phase 4] Checking inbox for replies ...
+[2026-06-15 00:08:23] 
+[Phase 5] Sending digest to you ...
+[2026-06-15 00:08:27] 
+[Phase 6] Sending daily digest to Telegram ...
+[2026-06-15 00:08:28] 
+[Phase 7] Sending no-website leads to Telegram ...
+[2026-06-15 00:08:28] 
+  ✅ DONE — check sandeepnaikb0@gmail.com and Telegram
+[2026-06-15 00:08:28] ============================================================
