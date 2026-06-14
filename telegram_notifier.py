@@ -1,8 +1,31 @@
 import sys
 import requests
+import threading
 from config import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
 
 if hasattr(sys.stdout, "reconfigure"): sys.stdout.reconfigure(encoding="utf-8")
+
+_search_in_progress = False
+_search_lock = threading.Lock()
+
+def _run_client_finder_bg():
+    global _search_in_progress
+    try:
+        import main
+        main.log("  [Telegram Trigger] Starting client finder thread...")
+        main.run()
+        send_message(
+            "✅ <b>Finished finding clients!</b>\n"
+            "Check `/clients` to see the new leads, `/projects` for confirmed ones, or `/earnings` for potential earnings."
+        )
+    except Exception as e:
+        import traceback
+        err = traceback.format_exc()
+        send_message(f"❌ <b>Error finding clients:</b>\n<pre>{escape_html(str(e))}</pre>")
+    finally:
+        with _search_lock:
+            _search_in_progress = False
+
 
 def escape_html(text: str) -> str:
     if not text: return ""
@@ -108,6 +131,7 @@ def handle_commands():
             if cmd == "/help":
                 reply = (
                     "🤖 <b>Agency Bot Commands:</b>\n\n"
+                    "<b>/find</b> — Find new clients & send pitches now\n"
                     "<b>/projects</b> — View confirmed freelance projects\n"
                     "<b>/earnings</b> — Calculate potential earnings\n"
                     "<b>/clients</b> — List recent hot leads to contact\n"
@@ -115,7 +139,35 @@ def handle_commands():
                 )
                 send_message(reply)
 
-
+            elif cmd == "/find" or cmd == "/find_clients":
+                import os
+                if os.environ.get("GITHUB_ACTIONS") == "true":
+                    reply = (
+                        "⚠️ <b>On-demand search is only available locally.</b>\n\n"
+                        "Because GitHub Actions has resource limits and lacks pre-installed browser binaries in the update checker, you can:\n"
+                        "1️⃣ Run the bot locally using <code>run_24_7.bat</code> and send <code>/find</code>.\n"
+                        "2️⃣ Or, trigger it manually on GitHub: Go to your repo -> <b>Actions</b> -> select <b>'Agency Bot — Daily Lead Run'</b> -> click <b>'Run workflow'</b>!"
+                    )
+                    send_message(reply)
+                else:
+                    global _search_in_progress
+                    already_running = False
+                    with _search_lock:
+                        if _search_in_progress:
+                            already_running = True
+                        else:
+                            _search_in_progress = True
+                    
+                    if already_running:
+                        send_message("⚠️ <b>A client search is already in progress.</b> Please wait for the current run to finish.")
+                    else:
+                        send_message(
+                            "🔍 <b>Started finding clients...</b>\n"
+                            "Rotating to the next city, scraping Google Maps, auditing websites, generating pitches, and sending emails.\n"
+                            "⏱️ This process takes around 15-30 minutes. I will send you a message here once completed!"
+                        )
+                        t = threading.Thread(target=_run_client_finder_bg, daemon=True)
+                        t.start()
 
             elif cmd == "/projects":
                 qualified_leads = []
