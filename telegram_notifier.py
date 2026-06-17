@@ -1,5 +1,6 @@
 import sys
 import requests
+import tracker
 from config import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
 
 if hasattr(sys.stdout, "reconfigure"): sys.stdout.reconfigure(encoding="utf-8")
@@ -108,11 +109,147 @@ def handle_commands():
 
             if cmd == "/help":
                 reply = (
-                    "🤖 <b>Agency Bot Commands:</b>\n\n"
-                    "<b>/projects</b> — View confirmed freelance projects\n"
-                    "<b>/earnings</b> — Calculate potential earnings\n"
-                    "<b>/clients</b> — List recent hot leads to contact\n"
-                    "<b>/help</b> — Show this help message"
+                    "🤖 <b>Agency Bot CRM — Commands</b>\n\n"
+                    "📋 <b>Pipeline</b>\n"
+                    "/pipeline — Funnel view (counts per stage)\n"
+                    "/hot — Active HIGH-priority leads to chase\n"
+                    "/clients — Recently scraped hot leads\n"
+                    "/stats — Full bot performance stats\n\n"
+                    "🔍 <b>Lead lookup</b>\n"
+                    "/lead &lt;name or email&gt; — Full lead card + notes\n\n"
+                    "✍️ <b>Manage a lead</b>\n"
+                    "/note &lt;email&gt; &lt;text&gt; — Add a note\n"
+                    "/close &lt;email&gt; &lt;amount&gt; — Mark deal WON 🎉\n"
+                    "/lost &lt;email&gt; — Mark deal lost\n\n"
+                    "💰 <b>Money</b>\n"
+                    "/earnings — Real + potential revenue\n"
+                    "/projects — Confirmed/qualified projects\n\n"
+                    "<b>/help</b> — Show this message"
+                )
+                send_message(reply)
+
+            elif cmd == "/pipeline":
+                counts = tracker.pipeline_counts()
+                stage_icons = {
+                    "COLD_SENT": "📧", "FOLLOW_UP_SENT": "📩", "SECOND_FOLLOWUP_SENT": "📨",
+                    "REPLIED": "💬", "QUALIFIED": "🏆", "HANDOFF": "🙋",
+                    "OPTED_OUT": "🚫", "CLOSED_WON": "✅", "CLOSED_LOST": "❌",
+                }
+                if not counts:
+                    reply = "ℹ️ No leads in the pipeline yet."
+                else:
+                    reply = "📊 <b>Pipeline Funnel</b>\n\n"
+                    order = ["COLD_SENT","FOLLOW_UP_SENT","SECOND_FOLLOWUP_SENT","REPLIED",
+                              "QUALIFIED","HANDOFF","CLOSED_WON","CLOSED_LOST","OPTED_OUT"]
+                    for stage in order:
+                        if stage in counts:
+                            reply += f"{stage_icons.get(stage,'•')} <b>{stage}</b>: {counts[stage]}\n"
+                    reply += f"\n<b>Total tracked: {sum(counts.values())}</b>"
+                send_message(reply)
+
+            elif cmd == "/hot":
+                convs = tracker.get_all()
+                active_hot = [
+                    (email, d) for email, d in convs.items()
+                    if d.get("priority") == "HIGH" and tracker.is_active(d)
+                ]
+                active_hot.sort(key=lambda x: x[1].get("last_contact",""), reverse=True)
+                if not active_hot:
+                    reply = "ℹ️ No active HIGH-priority leads right now."
+                else:
+                    reply = f"🔥 <b>Active Hot Leads ({len(active_hot)}):</b>\n\n"
+                    for email, d in active_hot[:10]:
+                        reply += (
+                            f"• <b>{escape_html(d.get('business_name','Unknown'))}</b> "
+                            f"({escape_html(d.get('city',''))}) — {d.get('stage','')}\n"
+                            f"  📧 <code>{escape_html(email)}</code>\n"
+                        )
+                send_message(reply)
+
+            elif cmd == "/lead":
+                query = text[len(cmd):].strip()
+                if not query:
+                    send_message("ℹ️ Usage: /lead <name or email>")
+                else:
+                    found_email, d = tracker.find_by_query(query)
+                    if not d:
+                        reply = f"❌ No lead found matching \"{escape_html(query)}\""
+                    else:
+                        notes = d.get("notes", [])
+                        notes_text = "\n".join(
+                            f"  📝 {escape_html(n.get('date',''))}: {escape_html(n.get('text',''))}"
+                            for n in notes
+                        ) or "  (no notes yet)"
+                        reply = (
+                            f"📇 <b>{escape_html(d.get('business_name','Unknown'))}</b>\n\n"
+                            f"<b>Stage:</b> {escape_html(d.get('stage',''))}\n"
+                            f"<b>Priority:</b> {escape_html(d.get('priority',''))}\n"
+                            f"<b>Category:</b> {escape_html(d.get('category',''))}\n"
+                            f"<b>City:</b> {escape_html(d.get('city',''))}\n"
+                            f"<b>Email:</b> <code>{escape_html(found_email)}</code>\n"
+                            f"<b>Phone:</b> {escape_html(d.get('phone','—'))}\n"
+                            f"<b>Website:</b> {escape_html(d.get('website','—'))}\n"
+                            f"<b>Deal value:</b> ₹{d.get('deal_value',0):,}\n"
+                            f"<b>Last contact:</b> {escape_html(d.get('last_contact',''))}\n\n"
+                            f"<b>Notes:</b>\n{notes_text}"
+                        )
+                    send_message(reply)
+
+            elif cmd == "/note":
+                parts = text[len(cmd):].strip().split(maxsplit=1)
+                if len(parts) < 2 or "@" not in parts[0]:
+                    send_message("ℹ️ Usage: /note <email> <note text>")
+                else:
+                    target_email, note_text = parts[0], parts[1]
+                    if tracker.add_note(target_email, note_text):
+                        send_message(f"✅ Note added for <code>{escape_html(target_email)}</code>")
+                    else:
+                        send_message(f"❌ No lead found with email {escape_html(target_email)}")
+
+            elif cmd == "/close":
+                parts = text[len(cmd):].strip().split()
+                if len(parts) < 2 or "@" not in parts[0] or not parts[1].isdigit():
+                    send_message("ℹ️ Usage: /close <email> <amount in INR>")
+                else:
+                    target_email, amount = parts[0], int(parts[1])
+                    if tracker.close_deal(target_email, amount):
+                        send_message(
+                            f"🎉🤑 <b>DEAL WON!</b> ₹{amount:,} from <code>{escape_html(target_email)}</code>.\n"
+                            f"Go build it and get paid! 💪"
+                        )
+                    else:
+                        send_message(f"❌ No lead found with email {escape_html(target_email)}")
+
+            elif cmd == "/lost":
+                target_email = text[len(cmd):].strip()
+                if not target_email or "@" not in target_email:
+                    send_message("ℹ️ Usage: /lost <email>")
+                elif tracker.mark_lost(target_email):
+                    send_message(f"📉 Marked <code>{escape_html(target_email)}</code> as lost. Moving on!")
+                else:
+                    send_message(f"❌ No lead found with email {escape_html(target_email)}")
+
+            elif cmd == "/stats":
+                import csv as _csv, os as _os
+                def _count_rows(path):
+                    if not _os.path.exists(path): return 0
+                    with open(path, "r", encoding="utf-8") as f:
+                        return sum(1 for _ in _csv.DictReader(f))
+                scraped  = _count_rows("leads.csv")
+                emailed  = _count_rows("sent_log.csv")
+                replied  = _count_rows("replied_log.csv")
+                counts   = tracker.pipeline_counts()
+                won      = counts.get("CLOSED_WON", 0)
+                revenue  = tracker.total_revenue()
+                reply = (
+                    "📈 <b>Agency Bot — Performance Stats</b>\n\n"
+                    f"🔎 Leads scraped: <b>{scraped}</b>\n"
+                    f"📧 Cold emails sent: <b>{emailed}</b>\n"
+                    f"💬 Replies received: <b>{replied}</b>\n"
+                    f"🏆 Qualified: <b>{counts.get('QUALIFIED',0)}</b>\n"
+                    f"✅ Deals won: <b>{won}</b>\n"
+                    f"❌ Deals lost: <b>{counts.get('CLOSED_LOST',0)}</b>\n\n"
+                    f"💰 <b>Total revenue: ₹{revenue:,}</b>"
                 )
                 send_message(reply)
 
@@ -144,26 +281,21 @@ def handle_commands():
                 send_message(reply)
 
             elif cmd == "/earnings" or cmd == "/money":
-                qualified_count = 0
-                if os.path.exists("conversations.json"):
-                    try:
-                        with open("conversations.json", "r", encoding="utf-8") as f:
-                            convs = json.load(f)
-                            for c in convs.values():
-                                if c.get("stage") == "QUALIFIED":
-                                    qualified_count += 1
-                    except Exception:
-                        pass
-
-                price_per_site = 8000
-                potential_revenue = qualified_count * price_per_site
+                counts = tracker.pipeline_counts()
+                won_revenue = tracker.total_revenue()
+                won_count   = counts.get("CLOSED_WON", 0)
+                qualified_count = counts.get("QUALIFIED", 0)
+                est_per_site = 15000
+                potential_revenue = qualified_count * est_per_site
 
                 reply = (
                     "💰 <b>Freelance Earnings Report</b>\n\n"
-                    f"🏆 Confirmed Projects: <b>{qualified_count}</b>\n"
-                    f"🏷️ Standard Rate: <b>₹{price_per_site:,} / website</b>\n\n"
-                    f"💵 <b>Potential Earnings: ₹{potential_revenue:,} INR</b>\n\n"
-                    "🚀 <i>Keep pitching and closing projects to increase your revenue!</i>"
+                    f"✅ Deals closed: <b>{won_count}</b>\n"
+                    f"💵 <b>Real earnings so far: ₹{won_revenue:,} INR</b>\n\n"
+                    f"🏆 In pipeline (qualified, not yet closed): <b>{qualified_count}</b>\n"
+                    f"🏷️ Est. rate: ₹{est_per_site:,}/site\n"
+                    f"📈 <b>Potential if all close: ₹{potential_revenue:,} INR</b>\n\n"
+                    "🚀 <i>Use /close &lt;email&gt; &lt;amount&gt; once you land a deal!</i>"
                 )
                 send_message(reply)
 
