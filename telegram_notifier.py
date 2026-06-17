@@ -110,10 +110,13 @@ def handle_commands():
             if cmd == "/help":
                 reply = (
                     "🤖 <b>Agency Bot CRM — Commands</b>\n\n"
+                    "🚀 <b>Action</b>\n"
+                    "/find — Scrape a fresh city & pitch right now\n\n"
                     "📋 <b>Pipeline</b>\n"
                     "/pipeline — Funnel view (counts per stage)\n"
                     "/hot — Active HIGH-priority leads to chase\n"
                     "/clients — Recently scraped hot leads\n"
+                    "/replies — Last 8 client email replies\n"
                     "/stats — Full bot performance stats\n\n"
                     "🔍 <b>Lead lookup</b>\n"
                     "/lead &lt;name or email&gt; — Full lead card + notes\n\n"
@@ -126,6 +129,62 @@ def handle_commands():
                     "/projects — Confirmed/qualified projects\n\n"
                     "<b>/help</b> — Show this message"
                 )
+                send_message(reply)
+
+            elif cmd == "/find" or cmd == "/find_clients":
+                token = os.getenv("GITHUB_TOKEN", "")
+                repo  = os.getenv("GITHUB_REPOSITORY", "")
+                if not token or not repo:
+                    send_message(
+                        "⚠️ <b>/find only works when the bot runs on GitHub Actions.</b>\n"
+                        "Go to your repo → <b>Actions</b> → \"Agency Bot — Daily Lead Run\" → <b>Run workflow</b> instead."
+                    )
+                else:
+                    try:
+                        r = requests.post(
+                            f"https://api.github.com/repos/{repo}/actions/workflows/daily_run.yml/dispatches",
+                            headers={
+                                "Authorization": f"Bearer {token}",
+                                "Accept": "application/vnd.github+json",
+                            },
+                            json={"ref": "main", "inputs": {"run_slot": "0"}},
+                            timeout=10,
+                        )
+                        if r.status_code in (201, 204):
+                            send_message(
+                                "🔍 <b>Started finding new clients!</b>\n"
+                                "Scraping a fresh city, auditing sites, generating pitches, sending emails.\n"
+                                "⏱️ Takes ~20-30 min — I'll send the lead digest here when it's done."
+                            )
+                        else:
+                            send_message(f"❌ Couldn't start search ({r.status_code}): {escape_html(r.text[:200])}")
+                    except Exception as e:
+                        send_message(f"❌ Error triggering search: {escape_html(str(e))}")
+
+            elif cmd == "/replies":
+                replies_list = []
+                if os.path.exists("replied_log.csv"):
+                    try:
+                        with open("replied_log.csv", "r", encoding="utf-8") as f:
+                            replies_list = list(csv.DictReader(f))
+                    except Exception:
+                        pass
+                recent = replies_list[-8:] if len(replies_list) > 8 else replies_list
+                recent.reverse()
+                if not recent:
+                    reply = "ℹ️ No client replies logged yet."
+                else:
+                    intent_icons = {
+                        "CONFIRM": "🎉", "INTERESTED": "👍", "PRICING": "💰",
+                        "QUESTION": "❓", "NOT_INTERESTED": "🚫", "VAGUE": "🤔",
+                    }
+                    reply = "📨 <b>Recent Client Replies:</b>\n\n"
+                    for row in recent:
+                        icon = intent_icons.get(row.get("intent",""), "•")
+                        reply += (
+                            f"{icon} <b>{escape_html(row.get('sender',''))}</b> — {row.get('intent','')}\n"
+                            f"   {escape_html(row.get('subject',''))} ({row.get('date','')})\n"
+                        )
                 send_message(reply)
 
             elif cmd == "/pipeline":
