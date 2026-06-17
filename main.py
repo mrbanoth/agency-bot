@@ -43,12 +43,15 @@ def log(msg):
         f.write(line + "\n")
 
 
-# ── City rotation: 1 city per run, cycles through all cities ──
+# ── City rotation: 2 runs/day (AM + PM), each hits a different city ──
 
 def pick_today_city() -> str:
-    """Rotate through CITIES based on day-of-year so each city runs once every N days."""
+    """Rotate through CITIES based on day-of-year + run slot (AM=0 / PM=1).
+    Running twice a day with a different city per slot doubles lead coverage
+    without ever re-scraping the same city in one day."""
     day_index = datetime.now().timetuple().tm_yday
-    return CITIES[day_index % len(CITIES)]
+    slot = int(os.getenv("AGENCY_RUN_SLOT", "0"))
+    return CITIES[(day_index * 2 + slot) % len(CITIES)]
 
 
 # ── Brand blocklist: skip huge national brands ─────────────────
@@ -337,8 +340,9 @@ def run():
     today_city = pick_today_city()
     today_date = datetime.now().strftime("%d %b %Y")
 
+    slot_label = "🌅 AM RUN" if os.getenv("AGENCY_RUN_SLOT", "0") == "0" else "🌆 PM RUN"
     log("=" * 60)
-    log(f"  AGENCY BOT  |  {today_city}  |  {today_date}")
+    log(f"  🤖 AGENCY BOT  |  {slot_label}  |  {today_city}  |  {today_date}")
     log(f"  Rotation: city {CITIES.index(today_city)+1}/{len(CITIES)}")
     log("=" * 60)
 
